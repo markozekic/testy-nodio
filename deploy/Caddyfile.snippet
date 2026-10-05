@@ -1,0 +1,11 @@
+# Přidej do Caddyfile na VPS a spusť: sudo systemctl reload caddy
+# Přístup: uživatel meda, heslo dvk (v souboru je jen bcrypt hash).
+testy.nodio.cz {
+	root * /var/www/testy.nodio.cz/public
+	basicauth {
+		meda $2a$12$J0Cpk8luSF1MEG1haR/lCeaZBoiCAW0j.MAm2EsMzH1wZavUvmov6
+	}
+	header X-Robots-Tag "noindex, nofollow"
+	encode zstd gzip
+	file_server
+}

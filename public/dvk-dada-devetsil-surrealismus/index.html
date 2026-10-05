@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Dada Devětsil Surrealismus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Source+Serif+4:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow column, constructivist headline block, flat answer chips. Red is the only accent. */
+:root{
+  --bg:#eceff3; --surface:#ffffff; --ink:#151a22; --muted:#566070; --line:#cdd3dc;
+  --accent:#c8322b; --accent-ink:#ffffff; --link:#2447a8;
+  --good:#1c7448; --good-bg:#e1f3ea; --bad:#b3261e; --bad-bg:#fbe6e4; --pick:#e9edf8;
+  --f-head:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12151b; --surface:#1b2029; --ink:#eceff4; --muted:#9aa4b2; --line:#303846;
+  --accent:#ef5b52; --accent-ink:#12151b; --link:#93abff;
+  --good:#6fd1a0; --good-bg:#17332a; --bad:#ff9189; --bad-bg:#3a1f1f; --pick:#26304a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151b; --surface:#1b2029; --ink:#eceff4; --muted:#9aa4b2; --line:#303846;
+  --accent:#ef5b52; --accent-ink:#12151b; --link:#93abff;
+  --good:#6fd1a0; --good-bg:#17332a; --bad:#ff9189; --bad-bg:#3a1f1f; --pick:#26304a; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:18px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:20px 56px}
+a{color:var(--link)}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.mast{display:grid;gap:14px;padding-bottom:18px;border-bottom:6px solid var(--ink);margin-bottom:22px}
+.mast h1{margin:0;font-family:var(--f-head);font-weight:900;text-transform:uppercase;line-height:.92;letter-spacing:-.01em;font-size:clamp(2.1rem,9.5vw,3.6rem)}
+.mast h1 span{display:block}
+.mast h1 span:nth-child(2){color:var(--accent);padding-left:.6em}
+.mast h1 span:nth-child(3){padding-left:1.2em}
+.mast p{margin:0;font-family:var(--f-head);font-weight:500;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+.lead{margin:0 0 18px;max-width:60ch}
+.modes{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.mode{display:grid;gap:2px;text-align:left;background:var(--surface);border:2px solid var(--ink);border-radius:2px;padding:12px 14px;cursor:pointer}
+.mode:hover{background:var(--pick)}
+.mode b{font-family:var(--f-head);font-weight:800;font-size:1.02rem;line-height:1.2}
+.mode small{color:var(--muted);font-size:.9rem}
+.mode.all{grid-column:1/-1;background:var(--ink);color:var(--bg)}
+.mode.all small{color:inherit;opacity:.8}
+.mode.all:hover{background:var(--accent);color:var(--accent-ink)}
+.foot{margin-top:26px;color:var(--muted);font-size:.85rem}
+
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:14px;font-family:var(--f-head);font-weight:700;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase}
+.track{flex:1;height:8px;background:var(--line);border-radius:1px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.quit{background:none;border:0;padding:4px 0;cursor:pointer;color:var(--muted);text-decoration:underline;font-family:var(--f-head);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+
+.card{background:var(--surface);border:2px solid var(--ink);border-radius:2px;padding:16px;display:grid;gap:14px;min-width:0}
+.tag{font-family:var(--f-head);font-weight:800;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.prompt{margin:0;font-size:1.15rem;font-weight:600}
+.fig{margin:0;display:grid;gap:6px;justify-items:center}
+.fig img{max-height:min(62vh,520px);width:auto;max-width:100%;height:auto;border:1px solid var(--line);background:#fff}
+.fig figcaption{font-size:.78rem;color:var(--muted);text-align:center}
+.imgfail{border:2px dashed var(--line);padding:14px;font-size:.95rem}
+.desc{border-left:6px solid var(--ink);padding:6px 0 6px 14px;font-style:italic}
+
+.field{display:grid;gap:8px;min-width:0}
+.field>.lab{font-family:var(--f-head);font-weight:800;font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chips{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.chip{background:var(--surface);border:2px solid var(--line);border-radius:2px;padding:9px 12px;text-align:left;cursor:pointer;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--pick)}
+.chip.ok{border-color:var(--good);background:var(--good-bg)}
+.chip.no{border-color:var(--bad);background:var(--bad-bg)}
+.chip:disabled{cursor:default}
+.row{display:grid;gap:6px;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);align-items:center}
+.row select{width:100%;padding:9px 10px;border:2px solid var(--line);border-radius:2px;background:var(--surface);min-width:0}
+.row select.ok{border-color:var(--good);background:var(--good-bg)}
+.row select.no{border-color:var(--bad);background:var(--bad-bg)}
+.row .fix{grid-column:1/-1;font-size:.9rem;color:var(--good)}
+@media (max-width:520px){.row{grid-template-columns:1fr}}
+
+.ord{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ord li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;border:2px solid var(--line);padding:8px 10px;background:var(--surface)}
+.ord li.ok{border-color:var(--good);background:var(--good-bg)}
+.ord li.no{border-color:var(--bad);background:var(--bad-bg)}
+.ord .yr{font-family:var(--f-head);font-weight:800;margin-right:8px}
+.mv{display:flex;gap:6px}
+.mv button{width:40px;height:40px;border:2px solid var(--ink);background:var(--surface);cursor:pointer;font-size:1rem;line-height:1}
+.mv button:disabled{opacity:.3;cursor:default}
+
+.act{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{background:var(--ink);color:var(--bg);border:2px solid var(--ink);border-radius:2px;padding:10px 18px;cursor:pointer;font-family:var(--f-head);font-weight:800;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase}
+.btn:hover:not(:disabled){background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink)}
+.fb{border:2px solid var(--ink);padding:12px 14px;display:grid;gap:8px}
+.fb.good{border-color:var(--good);background:var(--good-bg)}
+.fb.bad{border-color:var(--bad);background:var(--bad-bg)}
+.fb strong{font-family:var(--f-head);font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:.9rem}
+.fb p{margin:0}
+.src{font-size:.82rem;color:var(--muted)}
+.src a{margin-right:10px}
+
+.score{font-family:var(--f-head);font-weight:900;font-size:clamp(3rem,16vw,5.5rem);line-height:1}
+.score small{font-size:.3em;font-weight:700;color:var(--muted)}
+table.sec{width:100%;border-collapse:collapse;font-size:.95rem}
+table.sec td{padding:7px 4px;border-bottom:1px solid var(--line)}
+table.sec td:last-child{text-align:right;font-family:var(--f-head);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mist{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.mist li{border-left:6px solid var(--bad);padding:4px 0 4px 12px}
+.mist b{font-weight:600}
+.mist span{display:block;color:var(--muted);font-size:.9rem}
+@media (prefers-reduced-motion:reduce){.track i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <h1><span>Dada</span><span>Devětsil</span><span>Surrealismus</span></h1>
+    <p>Poznávací test z dějin výtvarné kultury · příprava na 13. 10.</p>
+  </header>
+  <main id="app"></main>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const S = {
+  zuerich:{l:"Zürich turismus: Dada",u:"https://www.zuerich.com/en/visit/explore/dada"},
+  dada:{l:"Wikipedia: Dada",u:"https://en.wikipedia.org/wiki/Dada"},
+  nyb:{l:"The New York Review of Books: Dada v Curychu",u:"https://www.nybooks.com/?p=33953"},
+  fountain:{l:"Wikipedia: Fountain",u:"https://en.wikipedia.org/wiki/Fountain_(Duchamp)"},
+  ready:{l:"Wikipedia: Readymades of Marcel Duchamp",u:"https://en.wikipedia.org/wiki/Readymades_of_Marcel_Duchamp"},
+  merz:{l:"Museo Thyssen: Merzbild 1A",u:"https://museothyssen.org/node/17062"},
+  picabia:{l:"Artchive: Love Parade",u:"https://www.artchive.com/artwork/love-parade-francis-picabia-1917/"},
+  hoech:{l:"German History Docs: Höch, 1919",u:"https://germanhistorydocs.org/en/weimar-germany-1918-1933/hannah-hoech-cut-with-the-dada-kitchen-knife-through-the-last-weimar-beer-belly-cultural-epoch-in-germany-1919"},
+  hausmann:{l:"Wikipedia: Raoul Hausmann",u:"https://en.wikipedia.org/wiki/Raoul_Hausmann"},
+  ernst:{l:"Wikipedia: Max Ernst",u:"https://en.wikipedia.org/wiki/Max_Ernst"},
+  poetism:{l:"Wikipedia: Poetism",u:"https://en.wikipedia.org/wiki/Poetism"},
+  ct24:{l:"ČT24: Poetismus vznikl na půdě Devětsilu",u:"https://ct24.ceskatelevize.cz/clanek/kultura/literarni-smer-poetismus-vznikl-na-pude-devetsilu-karla-teigeho-215262"},
+  monoskop:{l:"Monoskop: Czechia",u:"https://monoskop.org/Czechia"},
+  devwiki:{l:"Wikipedia: Devětsil",u:"https://en.wikipedia.org/wiki/Dev%C4%9Btsil"},
+  theatre:{l:"Wikipedia: Osvobozené divadlo",u:"https://en.wikipedia.org/wiki/Liberated_Theatre"},
+  sleep:{l:"Wikipedia: Sleepwalker (Štyrský)",u:"https://en.wikipedia.org/wiki/Sleepwalker_(%C5%A0tyrsk%C3%BD)"},
+  kuh:{l:"Kunsthalle Praha: Štyrský",u:"https://emuseum.kunsthallepraha.org/en/objects/details/10"},
+  kuh2:{l:"Kunsthalle Praha: Štyrský (Černý Pierot)",u:"https://emuseum.kunsthallepraha.org/en/objects/details/36"},
+  toyen:{l:"Galerie Kvary: Toyen",u:"https://galeriekvary.cz/wp-content/uploads/2017/03/Toyen-1.pdf"},
+  buffalo:{l:"Buffalo AKG: Yves Tanguy",u:"https://buffaloakg.org/node/13937"},
+  lacma:{l:"LACMA: The Treachery of Images",u:"https://www.lacma.org/node/40094"},
+  persist:{l:"Wikipedia: The Persistence of Memory",u:"https://en.wikipedia.org/wiki/The_Persistence_of_Memory"},
+  surr:{l:"Wikipedia: Surrealism",u:"https://en.wikipedia.org/wiki/Surrealism"},
+  poets:{l:"Poets.org: stručný průvodce surrealismem",u:"https://poets.org/poetsorg/text/brief-guide-surrealism"},
+  breton:{l:"Poets.org: André Breton",u:"https://poets.org/node/44783"},
+  bohemia:{l:"Bohemia: Surrealismus v ČSR (1934)",u:"https://www.bohemia-online.de/index.php/bohemia/article/download/7691/11856"},
+  skupina:{l:"Databáze výstav: první výstava Skupiny surrealistů",u:"https://databazevystav.udu.cas.cz/en/detail/prvni-vystava-skupiny-surrealistu-v-csr"},
+  univ:{l:"Encyclopædia Universalis: avantgarda východní Evropy",u:"https://www.universalis.fr/encyclopedie/avant-garde-est-europeenne/4-les-annees-1930-les-voies-nouvelles-le-surrealisme/"},
+  zam:{l:"Školní podklady: český surrealismus (PDF)",u:"https://intranet.zamecek.cz/dum/DVK13/20-CESKY_SURREALISMUS.pdf"}
+};
+
+const F = (label, right, wrong) => ({label, o:[right, ...wrong], a:0});
+const DIR = ["Dada","Poetismus (Devětsil)","Artificialismus","Surrealismus"];
+const dirF = c => F("Směr", c, DIR.filter(d => d !== c));
+
+const BANK = [
+/* ---------- OBRÁZKY ---------- */
+{type:"fields",sec:"obr",file:"Marcel Duchamp, 1917, Fountain, photograph by Alfred Stieglitz.jpg",
+ fields:[F("Autor","Marcel Duchamp",["Man Ray","Francis Picabia","Hans Arp"]),
+         F("Název","Fountain (Fontána)",["Bicycle Wheel (Bicyklové kolo)","Bottle Rack (Sušák na lahve)","Mechanická hlava"]),
+         dirF("Dada")],
+ why:"Pisoár podepsaný „R. Mutt“, který Duchamp v roce 1917 poslal na výstavu Society of Independent Artists v New Yorku. Je to ready-made: běžný předmět povýšený na umění tím, že ho umělec vybere. Originál se ztratil, dochovala se jen tato fotografie Alfreda Stieglitze.",
+ src:[S.fountain,S.ready]},
+
+{type:"fields",sec:"obr",file:"Merzbild 1A (The Psychiatrist) (1919).jpg",
+ fields:[F("Autor","Kurt Schwitters",["Hannah Höch","Raoul Hausmann","Max Ernst"]),
+         F("Název","Merzbild 1A (Psychiatr)",["Řez kuchyňským nožem","Mechanická hlava (Duch naší doby)","Parade amoureuse"]),
+         dirF("Dada")],
+ why:"Kurt Schwitters, 1919: olej, asambláž a koláž z předmětů na plátně (mimo jiné podložka pod pivo, drát, novinové útržky a kovové části). Patří k prvním pracím ve stylu Merz. Schwitters skládal umělecké celky z odpadu a nalezených materiálů.",
+ src:[S.merz]},
+
+{type:"fields",sec:"obr",file:"Francis Picabia, 1917 - Parade amoureuse - Love parade.jpg",
+ fields:[F("Autor","Francis Picabia",["Marcel Duchamp","Man Ray","Max Ernst"]),
+         F("Název","Parade amoureuse (Love Parade)",["Cadeau (Dárek)","Bicycle Wheel (Bicyklové kolo)","Merzbild 1A"]),
+         dirF("Dada")],
+ why:"Francis Picabia, 1917, olej na kartonu. Strojové součástky spojené s milostným tématem a ironickým názvem jsou typické pro jeho dadaistickou tvorbu.",
+ src:[S.picabia]},
+
+{type:"fields",sec:"obr",file:"Teige, Odjezd na Kytheru (Departure for Cythera) (1923–24). Prague City Gallery.png",
+ fields:[F("Autor","Karel Teige",["Jindřich Štyrský","Toyen","Vítězslav Nezval"]),
+         F("Název","Odjezd na Kytheru",["Pozdrav z cesty","Náměsíčná","Hlas lesa"]),
+         dirF("Poetismus (Devětsil)")],
+ why:"Karel Teige, 1923–24, koláž a obrazová báseň (Galerie hlavního města Prahy). Obrazová báseň je typická forma poetismu: spojuje báseň, koláž, fotografii a další tištěný materiál.",
+ src:[S.poetism]},
+
+{type:"fields",sec:"obr",file:"Karel Teige, Pozdrav z cesty, 1923, koláž, papír, 33,1 x 23,5 cm, GHMP.png",
+ fields:[F("Autor","Karel Teige",["Jindřich Štyrský","Toyen","Jaroslav Seifert"]),
+         F("Název","Pozdrav z cesty",["Odjezd na Kytheru","Náměsíčná","Hlas lesa"]),
+         dirF("Poetismus (Devětsil)")],
+ why:"Karel Teige, obrazová báseň z let 1923–24 (zdroje datum uvádějí různě). Spojuje fotografii, mapu, korespondenci a symboly cestování. Jde o ukázku poetismu.",
+ src:[S.poetism,S.ct24]},
+
+{type:"fields",sec:"obr",file:"Jindřich Štyrský - Náměsíčná (1925).jpg",
+ fields:[F("Autor","Jindřich Štyrský",["Toyen","Karel Teige","Josef Šíma"]),
+         F("Název","Náměsíčná",["Pozdrav z cesty","Odjezd na Kytheru","Hlas lesa"]),
+         dirF("Artificialismus")],
+ why:"Jindřich Štyrský, 1925, olej na plátně (Moravská galerie v Brně). Štyrský a Toyen v té době rozvíjeli artificialismus, básnickou malbu, která nekopíruje skutečnost.",
+ src:[S.sleep,S.kuh]},
+
+{type:"fields",sec:"obr",file:"Yves Tanguy - Divisibilité indéfinie (1942).jpg",
+ fields:[F("Autor","Yves Tanguy",["Salvador Dalí","René Magritte","Joan Miró"]),
+         F("Název","Divisibilité indéfinie (Nekonečná dělitelnost)",["Persistence paměti","Zrada obrazů","Anatomie jako nevěsta"]),
+         dirF("Surrealismus")],
+ why:"Yves Tanguy, 1942, olej na plátně (Buffalo AKG Art Museum). Tanguy patřil od roku 1925 k pařížské surrealistické skupině. Typické jsou pusté snové krajiny s neurčitými, zvláštními tvary.",
+ src:[S.buffalo]},
+
+/* ---------- DÍLA PODLE POPISU ---------- */
+{type:"fields",sec:"popis",desc:"Rozteklé kapesní hodinky v pusté krajině, jedny pokryté mravenci. Uprostřed leží zdeformovaná tvář.",
+ link:{l:"Podívat se na dílo (Wikipedia)",u:"https://en.wikipedia.org/wiki/The_Persistence_of_Memory"},
+ fields:[F("Autor","Salvador Dalí",["René Magritte","Joan Miró","Yves Tanguy"]),
+         F("Název","Persistence paměti (La persistance de la mémoire)",["Zrada obrazů","Divisibilité indéfinie","Hlas lesa"]),
+         dirF("Surrealismus")],
+ why:"Salvador Dalí, 1931, olej na plátně, Museum of Modern Art v New Yorku. Rok předtím Dalí vyvinul paranoicko-kritickou metodu.",
+ src:[S.persist]},
+
+{type:"fields",sec:"popis",desc:"Realisticky namalovaná dýmka a pod ní nápis „Ceci n'est pas une pipe“ (To není dýmka).",
+ link:{l:"Podívat se na dílo (LACMA)",u:"https://www.lacma.org/node/40094"},
+ fields:[F("Autor","René Magritte",["Salvador Dalí","Max Ernst","Yves Tanguy"]),
+         F("Název","Zrada obrazů (La trahison des images)",["Persistence paměti","Mechanická hlava","Fontána"]),
+         dirF("Surrealismus")],
+ why:"René Magritte (Belgie), 1929, olej na plátně, LACMA v Los Angeles. Obraz dýmky není dýmka. Dílo ukazuje rozdíl mezi zobrazením a skutečností.",
+ src:[S.lacma]},
+
+{type:"fields",sec:"popis",desc:"Fotomontáž z časopiseckých fotografií: císař Vilém II., Hindenburg a Ebert mezi ozubenými koly a stroji.",
+ link:{l:"Podívat se na dílo (German History Docs)",u:S.hoech.u},
+ fields:[F("Autor","Hannah Höch",["Raoul Hausmann","Kurt Schwitters","Man Ray"]),
+         F("Název","Řez kuchyňským nožem Dada skrz poslední výmarskou pivobřichou kulturní epochu v Německu",["Merzbild 1A (Psychiatr)","Parade amoureuse","Pozdrav z cesty"]),
+         dirF("Dada")],
+ why:"Hannah Höch, 1919, fotomontáž (Nationalgalerie Berlín). Patří k nejznámějším dílům berlínského dada a je komentářem k době Výmarské republiky.",
+ src:[S.hoech]},
+
+{type:"fields",sec:"popis",desc:"Hlava z figuríny, na níž jsou připevněny měřicí a technické předměty: pravítko, součástky hodinek, části psacího stroje a fotoaparátu.",
+ link:{l:"O autorovi (Wikipedia)",u:S.hausmann.u},
+ fields:[F("Autor","Raoul Hausmann",["Hannah Höch","George Grosz","Hugo Ball"]),
+         F("Název","Mechanická hlava (Duch naší doby)",["Fontána","Zrada obrazů","Odjezd na Kytheru"]),
+         dirF("Dada")],
+ why:"Raoul Hausmann, kolem 1920, asambláž. Hausmann patřil k berlínskému dada a k průkopníkům fotomontáže. Říkalo se mu „Dadasoph“.",
+ src:[S.hausmann]},
+
+{type:"fields",sec:"popis",desc:"Reprodukce Mony Lisy s dokreslenými kníry a bradkou. Název je francouzská slovní hříčka.",
+ link:{l:"O ready-made (Wikipedia)",u:S.ready.u},
+ fields:[F("Autor","Marcel Duchamp",["Man Ray","Francis Picabia","Max Ernst"]),
+         F("Název","L.H.O.O.Q.",["Fontána","Bicycle Wheel (Bicyklové kolo)","Parade amoureuse"]),
+         dirF("Dada")],
+ why:"Marcel Duchamp, 1919. Duchamp podobnými zásahy zpochybňoval, co se vůbec dá považovat za umění.",
+ src:[S.ready]},
+
+/* ---------- TEORIE: DADA ---------- */
+{type:"fields",sec:"dada",prompt:"Kde a kdy vzniklo dada?",
+ fields:[F(null,"Curych (Zürich), 1916, kabaret Cabaret Voltaire",["Paříž, 1924, Bretonův manifest","Berlín, 1919, Höchová a Hausmann","New York, 1913, výstava Armory Show"])],
+ why:"Hugo Ball a Emmy Hennings otevřeli Cabaret Voltaire v Curychu 5. února 1916. Dada se rozvíjelo také v Berlíně, New Yorku, Paříži, Kolíně a Hannoveru.",
+ src:[S.zuerich,S.dada]},
+{type:"fields",sec:"dada",prompt:"Čemu se dada postavilo?",
+ fields:[F(null,"Válce, nacionalismu, buržoaznímu vkusu a tradičnímu pojetí umění",["Impresionismu a jeho studiu světla","Průmyslové výrobě a strojům","Psychoanalýze a snům"])],
+ why:"Dada vzniklo jako protest proti hrůzám první světové války. Bylo protiválečné, protiměšťácké a „protiumělecké“. Používalo nesmysl, náhodu a posměch.",
+ src:[S.dada]},
+{type:"fields",sec:"dada",prompt:"Kdo inicioval Cabaret Voltaire a bývá označován za zakladatele dada?",
+ fields:[F(null,"Hugo Ball",["Tristan Tzara","Marcel Duchamp","André Breton"])],
+ why:"Iniciátorem byl německý divadelník Hugo Ball spolu s Emmy Hennings. Tristan Tzara se později stal nejhorlivějším propagátorem dada.",
+ src:[S.nyb,S.zuerich]},
+{type:"fields",sec:"dada",prompt:"Který rumunský básník se stal hlavním propagátorem dada?",
+ fields:[F(null,"Tristan Tzara",["Hugo Ball","Richard Huelsenbeck","Hans Arp"])],
+ why:"Tristan Tzara (vlastním jménem Samuel Rosenstock) přišel do Curychu z Rumunska a byl označován za nejvášnivějšího obhájce a nejnáročnějšího propagátora dada.",
+ src:[S.nyb,S.zuerich]},
+{type:"fields",sec:"dada",prompt:"Pro které centrum dada je typická fotomontáž?",
+ fields:[F(null,"Berlín (Hausmann, Höchová, Grosz)",["Curych (Ball, Tzara)","New York (Duchamp)","Paříž (Breton)"])],
+ why:"Berlínské dada patřilo k průkopníkům fotomontáže. Hausmann ji prosazoval spolu s Hannah Höch a Georgem Groszem.",
+ src:[S.hausmann]},
+{type:"fields",sec:"dada",prompt:"Jak se říkalo Raoulu Hausmannovi?",
+ fields:[F(null,"Dadasoph",["Dadamat","Merzmann","Poetista"])],
+ why:"Hausmann byl označován za „Dadasopha“, filozofa dada. Psal teoretické texty, zvukové básně a tvořil fotomontáže.",
+ src:[S.hausmann]},
+{type:"fields",sec:"dada",prompt:"Co je typické pro Schwittersovo Merz?",
+ fields:[F(null,"Obrazy a asambláže skládané z odpadu a nalezených materiálů",["Čistě abstraktní malba bez jakýchkoli předmětů","Zvuková poezie bez textu","Fotografie bez použití fotoaparátu"])],
+ why:"Schwitters spojoval nalezené materiály (útržky novin, drát, kovové části) s malbou. Odpadní věci pro něj byly rovnocenným výtvarným materiálem.",
+ src:[S.merz]},
+{type:"fields",sec:"dada",prompt:"Kdo z těchto umělců byl původně dadaista, než se stal vůdcem surrealismu?",
+ fields:[F(null,"André Breton",["Salvador Dalí","Yves Tanguy","Toyen"])],
+ why:"Breton byl původně dadaista, ale z estetických důvodů se s dada rozešel. V roce 1924 vydal Manifest surrealismu.",
+ src:[S.breton]},
+{type:"fields",sec:"dada",prompt:"Co platí o Maxi Ernstovi?",
+ fields:[F(null,"Založil kolínskou dada skupinu a později patřil k surrealistům",["Byl českým členem Devětsilu","Je autorem Fontány","Je autorem Persistence paměti"])],
+ why:"Ernst založil roku 1919 s Johannesem Baargeldem kolínskou dada skupinu. Ve 20. letech se přesunul do Paříže a spolupracoval s Bretonem a Éluardem.",
+ src:[S.ernst]},
+{type:"fields",sec:"dada",prompt:"Co se stalo s dada v polovině 20. let?",
+ fields:[F(null,"Splynulo se surrealismem",["Stalo se oficiálním uměním Německa","Změnilo se v poetismus","Zaniklo bez jakéhokoli vlivu"])],
+ why:"V polovině 20. let dada přešlo do surrealismu. Řada dadaistů, mezi nimi Ernst, Tzara nebo Breton, se k němu připojila.",
+ src:[S.dada,S.poets]},
+
+/* ---------- TEORIE: DEVĚTSIL ---------- */
+{type:"fields",sec:"dev",prompt:"Kdy a kde vznikl Umělecký svaz Devětsil?",
+ fields:[F(null,"5. října 1920 v Praze, v kavárně Union",["1916 v Brně","1924 v Praze, v Národním divadle","1934 v Praze po vzoru pařížských surrealistů"])],
+ why:"Svaz vznikl 5. 10. 1920 v kavárně Union v Praze. Začínal jako menší skupina mladých umělců, ale brzy se rozrostl.",
+ src:[S.ct24,S.monoskop]},
+{type:"fields",sec:"dev",prompt:"Kdo byl hlavním teoretikem a organizátorem Devětsilu?",
+ fields:[F(null,"Karel Teige",["Vítězslav Nezval","Jaroslav Seifert","Jindřich Štyrský"])],
+ why:"Karel Teige byl iniciátorem, hlavním organizátorem a teoretickým mluvčím Devětsilu.",
+ src:[S.ct24,S.monoskop]},
+{type:"fields",sec:"dev",prompt:"Kdo NEBYL členem Devětsilu?",
+ fields:[F(null,"André Breton",["Jiří Wolker","Jaroslav Seifert","Vladislav Vančura"])],
+ why:"Breton byl francouzský surrealista. Mezi členy Devětsilu patřili například Teige, Nezval, Wolker, Seifert, Vančura, Voskovec, Werich, Ježek, Štyrský a Toyen.",
+ src:[S.ct24]},
+{type:"fields",sec:"dev",prompt:"Co je to poetismus?",
+ fields:[F(null,"Český program a životní styl: hravost, radost, fantazie a spojení obrazu s básní",["Mezinárodní protest proti válce pomocí nesmyslu","Zkoumání snů a podvědomí podle Freuda","Realistické zobrazení života dělníků"])],
+ why:"Poetismus vznikl v prostředí Devětsilu a byl uměleckým programem i způsobem života. Zdůrazňoval hravost, humor, lyriku, smyslovost a fantazii.",
+ src:[S.poetism,S.ct24]},
+{type:"fields",sec:"dev",prompt:"Kdo stál u vzniku poetismu?",
+ fields:[F(null,"Karel Teige a Vítězslav Nezval",["Jindřich Štyrský a Toyen","André Breton a Paul Éluard","Hugo Ball a Tristan Tzara"])],
+ why:"Poetismus formulovali především Karel Teige (teoreticky) a básník Vítězslav Nezval. Později se přidali Štyrský a Toyen, hlavně v obrazových básních.",
+ src:[S.poetism,S.ct24]},
+{type:"fields",sec:"dev",prompt:"Kdo vytvořil artificialismus?",
+ fields:[F(null,"Jindřich Štyrský a Toyen",["Karel Teige a Vítězslav Nezval","Jaroslav Seifert a František Halas","Jiří Voskovec a Jan Werich"])],
+ why:"Artificialismus rozvinuli malíři Štyrský a Toyen. Jejich manifest vyšel v časopise ReD roku 1927.",
+ src:[S.kuh,S.monoskop]},
+{type:"fields",sec:"dev",prompt:"Jak charakterizovali artificialismus jeho autoři?",
+ fields:[F(null,"Jako splynutí malíře a básníka: poetická malba, která nekopíruje skutečnost",["Jako přesné iluzivní zobrazení snů","Jako tvorbu z hotových předmětů","Jako koláže z novinových výstřižků"])],
+ why:"Štyrský a Toyen formulovali artificialismus jako sblížení malíře a básníka. Vycházel z abstrakce skutečných motivů a z poetické představivosti.",
+ src:[S.kuh,{l:"Židovský hřbitov (kniha Nezval, Štyrský, Teige)",u:"https://books.simsreed.com/books/48695"}]},
+{type:"fields",sec:"dev",prompt:"Kde Štyrský a Toyen rozvíjeli artificialismus?",
+ fields:[F(null,"V Paříži (v druhé polovině 20. let)",["V Curychu","V Berlíně","V Brně"])],
+ why:"Štyrský a Toyen žili v Paříži v letech 1925 až 1928 a artificialismus tam vznikl jako jejich vlastní směr.",
+ src:[S.kuh,S.kuh2]},
+{type:"fields",sec:"dev",prompt:"Které divadlo vzniklo jako divadelní sekce Devětsilu?",
+ fields:[F(null,"Osvobozené divadlo (Voskovec, Werich, Ježek)",["Národní divadlo","Divadlo Na zábradlí","Divadlo Járy Cimrmana"])],
+ why:"Osvobozené divadlo začínalo jako divadelní sekce Devětsilu. Později se kolem něj sjednotili Jiří Voskovec, Jan Werich a skladatel Jaroslav Ježek.",
+ src:[S.theatre]},
+{type:"fields",sec:"dev",prompt:"Co znamená název Devětsil?",
+ fields:[F(null,"Je to název rostliny (devětsil, anglicky butterbur)",["Zkratka německé umělecké skupiny","Jméno prvního předsedy svazu","Označení pro devět členů zakladatelů"])],
+ why:"Devětsil je název rostliny. Svaz ho přijal jako své jméno.",
+ src:[S.devwiki]},
+
+/* ---------- TEORIE: SURREALISMUS ---------- */
+{type:"fields",sec:"sur",prompt:"Kdo vydal Manifest surrealismu a kdy?",
+ fields:[F(null,"André Breton, 1924",["Tristan Tzara, 1916","Salvador Dalí, 1931","Karel Teige, 1934"])],
+ why:"André Breton vydal první Manifest surrealismu v roce 1924. Bývá považován za oficiální začátek hnutí.",
+ src:[S.breton,S.surr]},
+{type:"fields",sec:"sur",prompt:"Co je podle Bretona podstatou surrealismu?",
+ fields:[F(null,"Čistý psychický automatismus: vyjádření myšlení bez kontroly rozumu a bez ohledu na estetiku či morálku",["Posměch tradiční kultuře pomocí nesmyslu","Spojení obrazu a básně jako životní styl","Věrné zachycení každodenní reality"])],
+ why:"Breton definoval surrealismus jako čistý psychický automatismus, kterým se dá vyjádřit skutečné fungování myšlení bez kontroly rozumu a mimo estetické nebo morální ohledy.",
+ src:[S.poets,S.breton]},
+{type:"fields",sec:"sur",prompt:"Kdo nejvíce ovlivnil surrealisty v myšlení o snech a nevědomí?",
+ fields:[F(null,"Sigmund Freud",["Wassily Kandinsky","Claude Monet","Le Corbusier"])],
+ why:"Surrealismus vycházel z Freudových teorií snů, volných asociací a nevědomí. Breton s Freudovými metodami pracoval už za války na psychiatrickém oddělení.",
+ src:[S.surr,S.poets]},
+{type:"fields",sec:"sur",prompt:"Kdo vynalezl frottage (1925)?",
+ fields:[F(null,"Max Ernst",["Salvador Dalí","Man Ray","René Magritte"])],
+ why:"Frottage je technika otěru: umělec tužkou přetírá papír přiložený na strukturovaný povrch. Max Ernst ji vyvinul v roce 1925.",
+ src:[S.ernst]},
+{type:"fields",sec:"sur",prompt:"Jak se jmenuje metoda, kterou rozvíjel Salvador Dalí?",
+ fields:[F(null,"Paranoicko-kritická metoda",["Frottage","Automatické psaní","Poetismus"])],
+ why:"Paranoicko-kritickou metodu Dalí vyvinul krátce před obrazem Persistence paměti (1931). Šlo o záměrné vyvolávání halucinačních představ pro tvorbu.",
+ src:[S.persist]},
+{type:"fields",sec:"sur",prompt:"Co sděluje nápis „Ceci n'est pas une pipe“ pod obrazem dýmky?",
+ fields:[F(null,"Obraz dýmky není dýmka: zobrazení není skutečnost",["Dýmka je zakázaná","Obraz je kopií Dalího díla","Nápis je zkratkou autorova jména"])],
+ why:"René Magritte jím upozorňuje na rozdíl mezi zobrazením a skutečností. Obraz (La trahison des images) vznikl roku 1929.",
+ src:[S.lacma]},
+{type:"fields",sec:"sur",prompt:"Kdy byla založena Skupina surrealistů v ČSR?",
+ fields:[F(null,"1934",["1920","1924","1945"])],
+ why:"Skupina vznikla na jaře 1934. Nezval ji 21. března 1934 ohlásil manifestem Surrealismus v ČSR.",
+ src:[S.bohemia,S.skupina]},
+{type:"fields",sec:"sur",prompt:"Kdo patřil k zakladatelům Skupiny surrealistů v ČSR?",
+ fields:[F(null,"Jindřich Štyrský, Toyen, Vítězslav Nezval",["Hugo Ball, Tristan Tzara, Emmy Hennings","Marcel Duchamp, Man Ray, Francis Picabia","Jiří Voskovec, Jan Werich, Jaroslav Ježek"])],
+ why:"Zakladateli byli mimo jiné Štyrský, Toyen a Nezval. Ke skupině patřili také Teige, Honzl, Makovský a Bohuslav Brouk.",
+ src:[S.bohemia,S.kuh2]},
+{type:"fields",sec:"sur",prompt:"Z čí iniciativy vznikla česká skupina surrealistů?",
+ fields:[F(null,"Vítězslava Nezvala",["Hannah Höch","André Bretona v Praze","Jaroslava Seiferta"])],
+ why:"Podle encyklopedie Universalis vznikla skupina na podnět Nezvala na počátku roku 1934.",
+ src:[S.univ]},
+{type:"fields",sec:"sur",prompt:"Kdo je považován za hlavního teoretika českého surrealismu?",
+ fields:[F(null,"Karel Teige",["Vítězslav Nezval","Jaroslav Seifert","Jiří Wolker"])],
+ why:"Karel Teige, dříve teoretik Devětsilu a poetismu, se stal hlavním teoretikem českého surrealismu.",
+ src:[S.zam]},
+{type:"fields",sec:"sur",prompt:"S kým udržovala česká skupina úzké kontakty?",
+ fields:[F(null,"S pařížskou skupinou kolem Bretona",["S berlínskými dadaisty","S curyšským Cabaret Voltaire","S moskevskými konstruktivisty"])],
+ why:"Skupina spolupracovala s pařížskými surrealisty kolem Bretona. Toyen a Štyrský se s Bretonem a Éluardem seznámili v Paříži.",
+ src:[S.toyen,S.kuh2]},
+{type:"fields",sec:"sur",prompt:"Vlastním jménem Marie Čermínová je malířka…",
+ fields:[F(null,"Toyen",["Hannah Höch","Emmy Hennings","Sophie Taeuber-Arp"])],
+ why:"Toyen (Marie Čermínová) patřila k Devětsilu, spoluvytvářela artificialismus a v roce 1934 byla zakládající členkou Skupiny surrealistů v ČSR.",
+ src:[S.toyen,S.kuh2]},
+
+/* ---------- POJMY A PŘIŘAZOVÁNÍ ---------- */
+{type:"match",sec:"pojmy",prompt:"Přiřaď pojem k významu: techniky dada.",
+ pool:["Obraz vytvořený nalepením různých materiálů (papír, noviny, látka) na podklad","Kompozice ze střižených a slepených fotografií, například z časopisů","Běžný předmět povýšený na umělecké dílo tím, že ho umělec vybere","Báseň z hlásek a slabik bez běžného významu, určená k přednesu"],
+ rows:[{l:"Koláž",a:0},{l:"Fotomontáž",a:1},{l:"Ready-made",a:2},{l:"Zvuková báseň",a:3}],
+ why:"Ready-made je Duchampův pojem. Fotomontáž proslavili berlínští dadaisté, zvukovou báseň Hugo Ball (Karawane).",
+ src:[S.dada,S.ready]},
+{type:"match",sec:"pojmy",prompt:"Přiřaď pojem k významu: další pojmy.",
+ pool:["Spontánní tvorba (psaní, kresba) bez kontroly rozumu","Otěr struktury povrchu tužkou na papír (Ernst)","Spojení básně, koláže, fotografií a tištěných materiálů (poetismus)","Skládání obrazů a objektů z odpadu a nalezených věcí (Schwitters)"],
+ rows:[{l:"Automatismus",a:0},{l:"Frottage",a:1},{l:"Obrazová báseň",a:2},{l:"Merz",a:3}],
+ why:"Automatismus je jádrem Bretonovy definice surrealismu. Frottage vyvinul Ernst v roce 1925. Obrazová báseň je forma poetismu a Merz Schwittersův způsob tvorby.",
+ src:[S.poets,S.ernst,S.poetism,S.merz]},
+{type:"match",sec:"pojmy",prompt:"Přiřaď dílo k autorovi.",
+ pool:["Marcel Duchamp","Hannah Höch","Raoul Hausmann","Francis Picabia","Salvador Dalí","René Magritte"],
+ rows:[{l:"Fountain (Fontána)",a:0},{l:"Řez kuchyňským nožem Dada…",a:1},{l:"Mechanická hlava",a:2},{l:"Parade amoureuse",a:3},{l:"Persistence paměti",a:4},{l:"Zrada obrazů",a:5}],
+ why:"Fontána 1917, Höchová 1919, Mechanická hlava kolem 1920, Parade amoureuse 1917, Persistence paměti 1931, Zrada obrazů 1929.",
+ src:[S.fountain,S.hoech,S.hausmann,S.picabia,S.persist,S.lacma]},
+{type:"match",sec:"pojmy",prompt:"Přiřaď osobnost ke směru, se kterým je spojena především.",
+ pool:["Dada","Devětsil (poetismus)","Surrealismus"],
+ rows:[{l:"Hugo Ball",a:0},{l:"Hannah Höch",a:0},{l:"Kurt Schwitters",a:0},{l:"Jiří Wolker",a:1},{l:"Jaroslav Seifert",a:1},{l:"André Breton",a:2},{l:"Salvador Dalí",a:2}],
+ why:"Ball, Höchová a Schwitters patřili k dada. Wolker a Seifert byli členy Devětsilu. Breton byl vůdcem surrealismu, Dalí jedním z jeho nejznámějších malířů.",
+ src:[S.ct24,S.dada,S.surr]},
+
+/* ---------- ČASOVÁ OSA ---------- */
+{type:"order",sec:"cas",prompt:"Seřaď události od nejstarší po nejnovější.",
+ items:[{t:"Otevření Cabaret Voltaire v Curychu",y:1916},{t:"Duchampova Fontána",y:1917},{t:"Höchová: Řez kuchyňským nožem (fotomontáž)",y:1919},{t:"Magritte: Zrada obrazů",y:1929},{t:"Dalí: Persistence paměti",y:1931}],
+ why:"Cabaret Voltaire 1916, Fontána 1917, Höchová 1919, Zrada obrazů 1929, Persistence paměti 1931.",
+ src:[S.zuerich,S.fountain,S.hoech,S.lacma,S.persist]},
+{type:"order",sec:"cas",prompt:"Seřaď události od nejstarší po nejnovější.",
+ items:[{t:"Cabaret Voltaire (vznik dada)",y:1916},{t:"Vznik Devětsilu",y:1920},{t:"Bretonův Manifest surrealismu",y:1924},{t:"Manifest artificialismu v časopise ReD",y:1927},{t:"Skupina surrealistů v ČSR",y:1934}],
+ why:"Dada 1916, Devětsil 1920, Bretonův manifest 1924, artificialismus (ReD) 1927, česká skupina surrealistů 1934.",
+ src:[S.zuerich,S.monoskop,S.breton,S.bohemia]}
+];
+
+const SECTIONS = [
+  {id:"obr",name:"Poznávačka: díla s obrázkem",desc:"autor, název a směr"},
+  {id:"popis",name:"Poznávačka: díla podle popisu",desc:"autor, název a směr, obrázek si otevřeš přes odkaz"},
+  {id:"dada",name:"Teorie: dada",desc:"vznik, osobnosti, techniky"},
+  {id:"dev",name:"Teorie: Devětsil",desc:"poetismus, artificialismus, členové"},
+  {id:"sur",name:"Teorie: surrealismus",desc:"Breton, techniky, česká skupina"},
+  {id:"pojmy",name:"Pojmy a přiřazování",desc:"techniky, autoři a díla"},
+  {id:"cas",name:"Časová osa",desc:"seřazování událostí"}
+];
+
+/* ============ ENGINE ============ */
+const $app = document.getElementById("app");
+const el = (h) => { const d = document.createElement("div"); d.innerHTML = h.trim(); return d.firstElementChild; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const imgUrl = f => "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=900";
+const filePage = f => "https://commons.wikimedia.org/wiki/File:" + encodeURIComponent(f.replace(/ /g, "_"));
+const srcHtml = list => '<div class="src">Zdroje: ' + list.filter(Boolean).map(s => '<a href="' + esc(s.u) + '" target="_blank" rel="noopener">' + esc(s.l) + '</a>').join("") + "</div>";
+
+let queue = [], qi = 0, results = [], currentLabel = "";
+
+function home() {
+  queue = []; results = [];
+  const tiles = SECTIONS.map(s => {
+    const n = BANK.filter(q => q.sec === s.id).length;
+    return '<button class="mode" data-sec="' + s.id + '"><b>' + esc(s.name) + '</b><small>' + n + " otázek · " + esc(s.desc) + "</small></button>";
+  }).join("");
+  $app.innerHTML = '<p class="lead">Vyber část, nebo spusť celý test. Po každé otázce se hned ukáže správná odpověď s vysvětlením a zdrojem. Na konci si můžeš zopakovat jen otázky, které se nepovedly.</p>' +
+    '<div class="modes">' + tiles + '<button class="mode all" data-sec="all"><b>Celý test, promíchaně</b><small>' + BANK.length + " otázek ze všech částí</small></button></div>" +
+    '<p class="foot">Obrázky děl se načítají z Wikimedia Commons, takže je potřeba připojení k internetu. U každé otázky najdeš odkazy na zdroje, ze kterých údaje pocházejí.</p>';
+  $app.querySelectorAll(".mode").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.sec;
+    const pool = id === "all" ? BANK : BANK.filter(q => q.sec === id);
+    currentLabel = id === "all" ? "Celý test" : SECTIONS.find(s => s.id === id).name;
+    begin(pool);
+  }));
+  window.scrollTo(0, 0);
+}
+
+function begin(pool) { queue = shuffle(pool); qi = 0; results = []; show(); }
+
+function show() {
+  if (qi >= queue.length) return finish();
+  const q = queue[qi];
+  const pct = Math.round(qi / queue.length * 100);
+  $app.innerHTML = '<div class="bar"><span>' + (qi + 1) + " / " + queue.length + '</span><div class="track"><i style="width:' + pct + '%"></i></div><button class="quit" id="quit">Konec</button></div><div id="stage"></div>';
+  document.getElementById("quit").addEventListener("click", home);
+  const stage = document.getElementById("stage");
+  if (q.type === "fields") renderFields(q, stage);
+  else if (q.type === "match") renderMatch(q, stage);
+  else renderOrder(q, stage);
+  window.scrollTo(0, 0);
+}
+
+function tagOf(q) { return SECTIONS.find(s => s.id === q.sec).name; }
+
+function feedback(q, pts, max) {
+  const cls = pts === max ? "good" : "bad";
+  const head = pts === max ? "Správně" : "Správně " + pts + " z " + max;
+  return '<div class="fb ' + cls + '"><strong>' + head + "</strong><p>" + esc(q.why) + "</p>" + srcHtml(q.src) + "</div>";
+}
+
+function nextBtn(stage, done) {
+  const last = qi === queue.length - 1;
+  const row = el('<div class="act"><button class="btn" id="next">' + (last ? "Zobrazit výsledek" : "Další otázka") + "</button></div>");
+  stage.querySelector(".card").appendChild(row);
+  row.querySelector("#next").addEventListener("click", () => { qi++; show(); });
+  row.querySelector("#next").focus();
+}
+
+/* --- chips (autor/název/směr, i obyčejné ABCD) --- */
+function renderFields(q, stage) {
+  const picks = q.fields.map(() => -1);
+  const opts = q.fields.map(f => shuffle(f.o.map((t, i) => ({t, ok: i === f.a}))));
+  let head = '<div class="tag">' + esc(tagOf(q)) + "</div>";
+  if (q.prompt) head += '<p class="prompt">' + esc(q.prompt) + "</p>";
+  if (q.file) head += '<figure class="fig" id="fig"><img id="pic" alt="Dílo k určení" src="' + esc(imgUrl(q.file)) + '"><figcaption>Určete autora, název a směr.</figcaption></figure>';
+  if (q.desc) head += '<p class="desc">' + esc(q.desc) + "</p>" + (q.link ? '<div class="src"><a href="' + esc(q.link.u) + '" target="_blank" rel="noopener">' + esc(q.link.l) + "</a></div>" : "");
+  const fieldsHtml = q.fields.map((f, fi) =>
+    '<div class="field">' + (f.label ? '<div class="lab">' + esc(f.label) + "</div>" : "") + '<div class="chips" data-f="' + fi + '">' +
+    opts[fi].map((o, oi) => '<button class="chip" aria-pressed="false" data-o="' + oi + '">' + esc(o.t) + "</button>").join("") + "</div></div>").join("");
+  const card = el('<div class="card">' + head + fieldsHtml + '<div class="act"><button class="btn" id="check" disabled>Zkontrolovat</button></div><div id="fbslot"></div></div>');
+  stage.appendChild(card);
+  const pic = card.querySelector("#pic");
+  if (pic) pic.addEventListener("error", () => {
+    card.querySelector("#fig").outerHTML = '<div class="imgfail">Obrázek se nenačetl. <a href="' + esc(filePage(q.file)) + '" target="_blank" rel="noopener">Otevři ho na Wikimedia Commons</a> a pak odpověz.</div>';
+  });
+  const check = card.querySelector("#check");
+  card.querySelectorAll(".chips").forEach(box => box.addEventListener("click", e => {
+    const b = e.target.closest(".chip"); if (!b || b.disabled) return;
+    const fi = +box.dataset.f;
+    picks[fi] = +b.dataset.o;
+    box.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b)));
+    check.disabled = picks.some(p => p < 0);
+  }));
+  check.addEventListener("click", () => {
+    let pts = 0;
+    card.querySelectorAll(".chips").forEach(box => {
+      const fi = +box.dataset.f;
+      box.querySelectorAll(".chip").forEach((c, oi) => {
+        c.disabled = true;
+        const o = opts[fi][oi];
+        if (o.ok) c.classList.add("ok");
+        else if (oi === picks[fi]) c.classList.add("no");
+      });
+      if (opts[fi][picks[fi]].ok) pts++;
+    });
+    check.parentElement.remove();
+    const cap = card.querySelector("figcaption");
+    if (cap && q.file) cap.innerHTML = 'Obrázek: <a href="' + esc(filePage(q.file)) + '" target="_blank" rel="noopener">Wikimedia Commons</a> (volné dílo)';
+    card.querySelector("#fbslot").innerHTML = feedback(q, pts, q.fields.length);
+    results.push({q, pts, max: q.fields.length});
+    nextBtn(stage);
+  });
+}
+
+/* --- přiřazování --- */
+function renderMatch(q, stage) {
+  const order = shuffle(q.pool.map((t, i) => i));
+  const rows = q.rows.map((r, ri) =>
+    '<div class="row"><label for="m' + ri + '">' + esc(r.l) + '</label><select id="m' + ri + '" data-r="' + ri + '"><option value="">Vyber…</option>' +
+    order.map(i => '<option value="' + i + '">' + esc(q.pool[i]) + "</option>").join("") + "</select></div>").join("");
+  const card = el('<div class="card"><div class="tag">' + esc(tagOf(q)) + '</div><p class="prompt">' + esc(q.prompt) + "</p>" + rows + '<div class="act"><button class="btn" id="check" disabled>Zkontrolovat</button></div><div id="fbslot"></div></div>');
+  stage.appendChild(card);
+  const sels = [...card.querySelectorAll("select")];
+  const check = card.querySelector("#check");
+  sels.forEach(s => s.addEventListener("change", () => { check.disabled = sels.some(x => x.value === ""); }));
+  check.addEventListener("click", () => {
+    let pts = 0;
+    sels.forEach((s, ri) => {
+      s.disabled = true;
+      const right = q.rows[ri].a;
+      if (+s.value === right) { s.classList.add("ok"); pts++; }
+      else { s.classList.add("no"); s.parentElement.appendChild(el('<div class="fix">Správně: ' + esc(q.pool[right]) + "</div>")); }
+    });
+    check.parentElement.remove();
+    card.querySelector("#fbslot").innerHTML = feedback(q, pts, q.rows.length);
+    results.push({q, pts, max: q.rows.length});
+    nextBtn(stage);
+  });
+}
+
+/* --- časová osa --- */
+function renderOrder(q, stage) {
+  let items = shuffle(q.items);
+  while (items.every((x, i) => x === q.items[i]) && q.items.length > 1) items = shuffle(q.items);
+  const card = el('<div class="card"><div class="tag">' + esc(tagOf(q)) + '</div><p class="prompt">' + esc(q.prompt) + '</p><ol class="ord" id="ord"></ol><div class="act"><button class="btn" id="check">Zkontrolovat</button></div><div id="fbslot"></div></div>');
+  stage.appendChild(card);
+  const ol = card.querySelector("#ord");
+  function draw() {
+    ol.innerHTML = "";
+    items.forEach((it, i) => {
+      const li = el('<li><span>' + esc(it.t) + '</span><span class="mv"><button aria-label="Posunout výš"' + (i === 0 ? " disabled" : "") + '>▲</button><button aria-label="Posunout níž"' + (i === items.length - 1 ? " disabled" : "") + ">▼</button></span></li>");
+      const [up, down] = li.querySelectorAll("button");
+      up.addEventListener("click", () => { [items[i - 1], items[i]] = [items[i], items[i - 1]]; draw(); });
+      down.addEventListener("click", () => { [items[i + 1], items[i]] = [items[i], items[i + 1]]; draw(); });
+      ol.appendChild(li);
+    });
+  }
+  draw();
+  card.querySelector("#check").addEventListener("click", () => {
+    const sorted = q.items.slice().sort((a, b) => a.y - b.y);
+    let pts = 0;
+    ol.innerHTML = "";
+    items.forEach((it, i) => {
+      const ok = it.y === sorted[i].y;
+      if (ok) pts++;
+      ol.appendChild(el('<li class="' + (ok ? "ok" : "no") + '"><span><span class="yr">' + it.y + "</span>" + esc(it.t) + "</span><span></span></li>"));
+    });
+    const fix = pts < items.length ? '<p>Správné pořadí: ' + sorted.map(s => s.y).join(" → ") + "</p>" : "";
+    card.querySelector(".act").remove();
+    card.querySelector("#fbslot").innerHTML = feedback(q, pts, items.length).replace("</div>", fix + "</div>");
+    results.push({q, pts, max: items.length});
+    nextBtn(stage);
+  });
+}
+
+/* --- výsledek --- */
+function correctText(q) {
+  if (q.type === "fields") return q.fields.map(f => (f.label ? f.label + ": " : "") + f.o[f.a]).join(" · ");
+  if (q.type === "match") return q.rows.map(r => r.l + " → " + q.pool[r.a]).join(" · ");
+  return q.items.slice().sort((a, b) => a.y - b.y).map(i => i.y + " " + i.t).join(" → ");
+}
+function labelOf(q) {
+  if (q.prompt) return q.prompt;
+  if (q.desc) return "Dílo: " + q.desc;
+  if (q.file) return "Dílo na obrázku (" + q.fields[0].o[0] + ")";
+  return tagOf(q);
+}
+function finish() {
+  const pts = results.reduce((a, r) => a + r.pts, 0), max = results.reduce((a, r) => a + r.max, 0);
+  const pct = max ? Math.round(pts / max * 100) : 0;
+  const bySec = SECTIONS.map(s => {
+    const r = results.filter(x => x.q.sec === s.id);
+    if (!r.length) return "";
+    const p = r.reduce((a, x) => a + x.pts, 0), m = r.reduce((a, x) => a + x.max, 0);
+    return "<tr><td>" + esc(s.name) + "</td><td>" + p + " / " + m + "</td></tr>";
+  }).join("");
+  const wrong = results.filter(r => r.pts < r.max);
+  const mist = wrong.length ? '<h2 class="prompt">K zopakování</h2><ul class="mist">' + wrong.map(r => "<li><b>" + esc(labelOf(r.q)) + "</b><span>" + esc(correctText(r.q)) + "</span></li>").join("") + "</ul>" : '<p class="prompt">Bez chyby.</p>';
+  $app.innerHTML = '<div class="card"><div class="tag">' + esc(currentLabel) + '</div><div class="score">' + pct + "<small> %</small></div><p>" + pts + " z " + max + ' bodů</p><table class="sec">' + bySec + "</table>" + mist +
+    '<div class="act">' + (wrong.length ? '<button class="btn" id="redo">Zopakovat chyby</button>' : "") + '<button class="btn ghost" id="again">Znovu stejnou část</button><button class="btn ghost" id="menu">Zpět na výběr</button></div></div>';
+  const doneQs = results.map(r => r.q);
+  if (wrong.length) document.getElementById("redo").addEventListener("click", () => begin(wrong.map(r => r.q)));
+  document.getElementById("again").addEventListener("click", () => begin(doneQs));
+  document.getElementById("menu").addEventListener("click", home);
+  window.scrollTo(0, 0);
+}
+
+home();
+</script>
+</body>
+</html>
