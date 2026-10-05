@@ -118,10 +118,16 @@ table.sec td:last-child{text-align:right;font-family:var(--f-head);font-weight:7
 .mist b{font-weight:600}
 .mist span{display:block;color:var(--muted);font-size:.9rem}
 @media (prefers-reduced-motion:reduce){.track i{transition:none}}
+
+.topnav{display:flex;gap:4px;margin:-4px 0 18px;padding-bottom:10px;border-bottom:2px solid var(--line, #cdd3dc);font-family:var(--f-head);font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+.topnav a{color:var(--ink);text-decoration:none;padding:6px 12px 6px 0;margin-right:12px;border-bottom:3px solid transparent}
+.topnav a:hover{border-bottom-color:var(--muted)}
+.topnav a[aria-current="page"]{border-bottom-color:var(--accent)}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <nav class="topnav" aria-label="Hlavní navigace"><a href="/" aria-current="page">Testy</a><a href="/vysvedceni/">Vysvědčení</a></nav>
   <header class="mast">
     <h1><span>Dada</span><span>Devětsil</span><span>Surrealismus</span></h1>
     <p>Poznávací test z dějin výtvarné kultury · příprava na 13. 10.</p>
