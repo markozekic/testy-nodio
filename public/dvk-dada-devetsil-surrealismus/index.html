@@ -498,9 +498,11 @@ function loadPoints() {
   if (typeof fetch !== "function") return;
   fetch("../vysvedceni/data.json?" + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => {
     const el = document.getElementById("pts");
-    if (!el || typeof d.points !== "number") return;
+    if (!el) return;
+    const mine = d.tests && d.tests[TEST_ID] ? d.tests[TEST_ID].points : (d.tests ? 0 : d.points);
+    if (typeof mine !== "number") return;
     el.hidden = false;
-    el.innerHTML = '<span>Body: ' + d.points + " / " + d.goal + (d.unlocked ? " · odměna odemčena" : "") + '</span><div class="track"><i style="width:' + d.points + '%"></i></div>';
+    el.innerHTML = '<span>Body za tento test: ' + mine + " / " + d.goal + (mine >= d.goal ? " · zvládnuto" : "") + '</span><div class="track"><i style="width:' + mine + '%"></i></div>';
   }).catch(() => {});
 }
 

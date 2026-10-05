@@ -68,18 +68,18 @@ def num(v, default=0):
 
 def build(log):
     sessions = {}
-    tw = 0
+    tws = {}
     for ts, q, ip, ua in sorted(read_events(log), key=lambda x: x[0]):
         s = sessions.setdefault(q["s"], {"id": q["s"], "test": q.get("t", ""), "start": ts, "mode": "", "n": 0,
                                          "ended": False, "p": 0, "x": 0, "answers": [], "ip": ip, "ua": ua, "last": ts})
         s["last"] = ts
         if q["e"] == "start":
-            s["start"] = ts; s["mode"] = q.get("mode", ""); s["n"] = num(q.get("n")); tw = num(q.get("tw")) or tw
+            s["start"] = ts; s["mode"] = q.get("mode", ""); s["n"] = num(q.get("n")); tws[s["test"]] = num(q.get("tw")) or tws.get(s["test"], 0)
         elif q["e"] == "ans":
             s["answers"].append({"ts": ts, "q": q.get("q", ""), "l": q.get("l", ""), "p": num(q.get("p")), "x": max(num(q.get("x")), 1)})
         elif q["e"] == "end":
             s["ended"] = True; s["p"] = num(q.get("p")); s["x"] = num(q.get("x")); s["mode"] = q.get("mode", s["mode"])
-    return sorted(sessions.values(), key=lambda s: s["start"]), tw
+    return sorted(sessions.values(), key=lambda s: s["start"]), tws
 
 
 def resets():
@@ -94,25 +94,34 @@ def resets():
     return out
 
 
-def points(sessions, tw, since):
-    """Body 0..GOAL: každá otázka se počítá podle nejlepšího dosaženého poměru od posledního resetu, váhou je počet dílčích bodů."""
+def points(sessions, tws, since, test):
+    """Body 0..GOAL pro jeden test: každá otázka se počítá nejlepším dosaženým poměrem od posledního resetu, váhou je počet dílčích bodů."""
     best, weight = {}, {}
     for s in sessions:
+        if s["test"] != test:
+            continue
         for a in s["answers"]:
             if a["ts"] <= since:
                 continue
             weight[a["q"]] = a["x"]
             best[a["q"]] = max(best.get(a["q"], 0.0), a["p"] / a["x"])
-    total = max(tw, sum(weight.values()), 1)
+    total = max(tws.get(test, 0), sum(weight.values()), 1)
     got = sum(best[q] * weight[q] for q in best)
     return min(GOAL, int(math.floor(GOAL * got / total + 1e-9)))
+
+
+def all_points(sessions, tws, since):
+    tests = sorted({s["test"] for s in sessions})
+    per = {t: points(sessions, tws, since, t) for t in tests}
+    overall = int(sum(per.values()) / len(per)) if per else 0
+    return per, overall
 
 
 def local(ts):
     return datetime.fromtimestamp(ts, TZ)
 
 
-def public_data(sessions, tw):
+def public_data(sessions, tws):
     out_s, days = [], defaultdict(lambda: {"attempts": 0, "answers": 0})
     qs = defaultdict(lambda: {"l": "", "p": 0, "x": 0, "n": 0})
     for s in sessions:
@@ -133,9 +142,9 @@ def public_data(sessions, tw):
     qlist.sort(key=lambda r: (r["pct"], -r["n"]))
     rs = resets()
     since = rs[-1][0] if rs else 0
-    pts = points(sessions, tw, since)
+    per, pts = all_points(sessions, tws, since)
     return {"updated": datetime.now(TZ).strftime("%Y-%m-%d %H:%M"),
-            "points": pts, "goal": GOAL, "unlocked": pts >= GOAL, "rewards": len(rs),
+            "points": pts, "tests": {t: {"points": v} for t, v in per.items()}, "goal": GOAL, "unlocked": pts >= GOAL, "rewards": len(rs),
             "since": local(since).strftime("%Y-%m-%d") if since else None,
             "sessions": out_s[::-1],
             "days": [{"date": k, **v} for k, v in sorted(days.items())],
@@ -160,21 +169,25 @@ def main():
     ap.add_argument("--admin", action="store_true")
     ap.add_argument("--reset", action="store_true", help="vynuluje body (odměna vyzvednuta); historie pokusů zůstane")
     a = ap.parse_args()
-    sessions, tw = build(a.log)
+    sessions, tws = build(a.log)
     if a.reset:
         rs = resets(); since = rs[-1][0] if rs else 0
-        pts = points(sessions, tw, since)
+        per, pts = all_points(sessions, tws, since)
         with open(RESET_FILE, "a", encoding="utf-8") as f:
             f.write("%f %d\n" % (time.time(), pts))
         print("Reset hotov (body před resetem: %d). Odměn dosud: %d" % (pts, len(rs) + 1))
     elif a.admin:
         rs = resets(); since = rs[-1][0] if rs else 0
-        print("Body od posledního resetu: %d / %d (resetů: %d)\n" % (points(sessions, tw, since), GOAL, len(rs)))
+        per, pts = all_points(sessions, tws, since)
+        print("Body od posledního resetu: %d / %d (resetů: %d)" % (pts, GOAL, len(rs)))
+        for t, v in per.items():
+            print("  %s: %d / %d" % (t, v, GOAL))
+        print()
         admin(sessions); return
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     tmp = a.out + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(public_data(sessions, tw), f, ensure_ascii=False, separators=(",", ":"))
+        json.dump(public_data(sessions, tws), f, ensure_ascii=False, separators=(",", ":"))
     os.replace(tmp, a.out)
     print("OK:", len(sessions), "pokusů ->", a.out)
 

@@ -24,6 +24,11 @@ h2{margin:30px 0 10px;font-family:var(--f-head);font-weight:800;font-size:1.05re
 .pts .tr{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
 .pts .tr i{display:block;height:100%;background:var(--accent);border-radius:5px}
 .pts .win{font-family:var(--f-head);font-weight:800;color:var(--accent)}
+.pl{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px}
+.pl li{display:grid;grid-template-columns:minmax(0,1fr) 90px auto;align-items:center;gap:10px;font-size:.95rem}
+.pl .tr{height:6px}
+.pl b{font-family:var(--f-head);font-size:.85rem;font-weight:800;white-space:nowrap}
+@media (max-width:420px){.pl li{grid-template-columns:1fr auto}.pl .tr{grid-column:1/-1;order:3}}
 .tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:16px}
 .tile{background:var(--surface);border:2px solid var(--ink);padding:10px 14px}
 .tile b{display:block;font-family:var(--f-head);font-weight:900;font-size:2rem;line-height:1.1}
@@ -70,6 +75,7 @@ td.n,th.n{text-align:right;white-space:nowrap}
   <div id="app"><p class="empty">Načítám…</p></div>
 </div>
 <script>
+const TESTS = [{id: "dvk-dada-devetsil-surrealismus", name: "Dada, Devětsil, surrealismus", href: "/dvk-dada-devetsil-surrealismus/"}];
 const MODES = {obr:"Poznávačka: díla s obrázkem", popis:"Poznávačka: díla podle popisu", dada:"Teorie: dada", dev:"Teorie: Devětsil", sur:"Teorie: surrealismus", pojmy:"Pojmy a přiřazování", cas:"Časová osa", all:"Celý test", redo:"Opakování chyb", again:"Znovu stejná část"};
 const MONTHS = ["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
 const $ = document.getElementById("app");
@@ -90,10 +96,12 @@ function render(d) {
   const best = done.length ? Math.max(...done.map(s => s.pct)) : null;
   const last = done.length ? done[0].pct : null;
   let h = "";
-  if (typeof d.points === "number") {
-    h += '<div class="pts"><span class="lab">Body za zvládnuté otázky</span><b>' + d.points + " / " + d.goal + '</b><div class="tr"><i style="width:' + d.points + '%"></i></div>' +
-      (d.unlocked ? '<span class="win">Odměna odemčena! Všechny otázky zvládnuté.</span>' : '<span class="note" style="margin:0">Počítá se nejlepší výsledek každé otázky. Všech ' + d.goal + " bodů = všechny otázky správně." + (d.rewards ? " Dosud vyzvednutých odměn: " + d.rewards + "." : "") + "</span>") + "</div>";
-  }
+  const per = TESTS.map(t => ({t, p: d.tests && d.tests[t.id] ? d.tests[t.id].points : 0}));
+  const overall = Math.floor(per.reduce((a, x) => a + x.p, 0) / Math.max(per.length, 1));
+  const unlocked = per.length > 0 && per.every(x => x.p >= d.goal);
+  h += '<div class="pts"><span class="lab">Body za zvládnuté otázky' + (per.length > 1 ? " · celkem" : "") + '</span><b>' + overall + " / " + d.goal + '</b><div class="tr"><i style="width:' + overall + '%"></i></div>' +
+    (unlocked ? '<span class="win">Odměna odemčena! Všechny otázky zvládnuté.</span>' : '<span class="note" style="margin:0">Počítá se nejlepší výsledek každé otázky. ' + d.goal + " bodů = všechny otázky správně." + (d.rewards ? " Dosud vyzvednutých odměn: " + d.rewards + "." : "") + "</span>") +
+    '<ul class="pl">' + per.map(x => '<li><a href="' + x.t.href + '">' + esc(x.t.name) + '</a><span class="tr"><i style="width:' + x.p + '%"></i></span><b>' + x.p + " / " + d.goal + "</b></li>").join("") + "</ul>" + "</div>";
   h += '<div class="tiles">' +
     tile(S.length, "spuštěných pokusů") + tile(done.length, "dokončených") + tile(days, days === 1 ? "den procvičování" : days >= 2 && days <= 4 ? "dny procvičování" : "dní procvičování") +
     (best !== null ? tile(best + " %", "nejlepší výsledek") : "") + (last !== null ? tile(last + " %", "poslední dokončený") : "") + "</div>";
