@@ -98,7 +98,7 @@ function render(d) {
   }
 
   h += '<h2>Všechny pokusy</h2><div class="card"><div class="tw">' + table(S) + '</div></div>' +
-    '<p class="note">Aktualizováno ' + esc(d.updated || "") + ". Stránka se obnovuje zhruba každých pět minut.</p>";
+    '<p class="note">Aktualizováno ' + esc(d.updated || "") + ". Údaje se obnovují zhruba každou minutu.</p>";
   $.innerHTML = h;
   if (chrono.length) { drawChart(chrono); document.getElementById("tog").addEventListener("click", e => {
     const t = document.getElementById("tbl"), c = document.getElementById("chart");
