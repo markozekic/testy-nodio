@@ -129,7 +129,7 @@ html{scroll-padding-top:56px}
 .topnav a[aria-current="page"]{border-bottom-color:var(--accent)}
 </style>
 </head>
-<body>
+<body data-test="dvk-dada-devetsil-surrealismus">
 <nav class="topnav" aria-label="Hlavní navigace"><div class="in"><a href="/" aria-current="page">Testy</a><a href="/vysvedceni/">Vysvědčení</a><a class="np" id="np" href="/vysvedceni/" hidden></a></div></nav>
 <div class="wrap">
   <header class="mast">
@@ -699,9 +699,11 @@ home();
     if (typeof fetch !== "function") return;
     fetch("/vysvedceni/data.json?" + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => {
       const el = document.getElementById("np");
-      if (!el || typeof d.points !== "number") return;
-      el.innerHTML = "<small>Body</small>" + d.points + "/" + (d.goal || 100);
-      el.title = "Získané body za všechny testy";
+      const id = document.body.dataset.test;
+      const t = id && Array.isArray(d.tests) ? d.tests.find(x => x.id === id) : null;
+      if (!el || !t) return;
+      el.innerHTML = "<small>Body</small>" + t.points + "/" + (d.goal || 100);
+      el.title = "Získané body za tento test";
       el.hidden = false;
     }).catch(() => {});
   }

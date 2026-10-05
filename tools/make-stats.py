@@ -3,7 +3,7 @@
 
 Použití:
   python3 tools/make-stats.py                     # vygeneruje data.json (bez IP adres)
-  python3 tools/make-stats.py --reset             # vynuluje body po vyzvednutí odměny
+  python3 tools/make-stats.py --reset TEST|all    # vynuluje body testu po vyzvednutí odměny
   python3 tools/make-stats.py --admin             # vypíše přehled včetně IP a prohlížeče (jen pro Marka)
   python3 tools/make-stats.py --log CESTA --out CESTA
 """
@@ -84,15 +84,24 @@ def build(log):
 
 
 def resets():
+    """Seznam (epoch, test_id nebo None = všechny testy, body)."""
     out = []
     try:
         for line in open(RESET_FILE, encoding="utf-8"):
             parts = line.split()
-            if parts:
-                out.append((float(parts[0]), parts[1] if len(parts) > 1 else "?"))
+            if not parts:
+                continue
+            if len(parts) >= 3:
+                out.append((float(parts[0]), parts[1], parts[2]))
+            else:
+                out.append((float(parts[0]), None, parts[1] if len(parts) > 1 else "?"))
     except OSError:
         pass
     return out
+
+
+def since_for(rs, test):
+    return max([r[0] for r in rs if r[1] in (None, test)] or [0])
 
 
 def points(sessions, tws, since, test):
@@ -118,11 +127,16 @@ def known_tests():
         return []
 
 
-def all_points(sessions, tws, since):
-    """Body za každý test uvedený v public/tests.json (test bez pokusu = 0) a souhrn jako průměr."""
-    per = {t["id"]: points(sessions, tws, since, t["id"]) for t in known_tests()}
-    overall = int(sum(per.values()) / len(per)) if per else 0
-    return per, overall
+def per_test(sessions, tws):
+    """Stav každého testu z public/tests.json: body od jeho posledního resetu, počet vyzvednutých odměn."""
+    rs = resets()
+    out = []
+    for t in known_tests():
+        since = since_for(rs, t["id"])
+        pts = points(sessions, tws, since, t["id"])
+        out.append(dict(t, points=pts, unlocked=pts >= GOAL, rewards=sum(1 for r in rs if r[1] in (None, t["id"])),
+                        since=local(since).strftime("%Y-%m-%d") if since else None))
+    return out
 
 
 def local(ts):
@@ -139,7 +153,7 @@ def public_data(sessions, tws):
         else:
             p, x = a_p, a_x
         dt = local(s["start"])
-        out_s.append({"date": dt.strftime("%Y-%m-%d"), "time": dt.strftime("%H:%M"), "mode": s["mode"], "n": s["n"],
+        out_s.append({"test": s["test"], "date": dt.strftime("%Y-%m-%d"), "time": dt.strftime("%H:%M"), "mode": s["mode"], "n": s["n"],
                       "answered": len(s["answers"]), "done": bool(s["ended"]), "p": p, "x": x,
                       "pct": round(100 * p / x) if x else None})
         d = days[dt.strftime("%Y-%m-%d")]
@@ -148,12 +162,8 @@ def public_data(sessions, tws):
             r = qs[a["q"]]; r["l"] = a["l"] or r["l"]; r["p"] += a["p"]; r["x"] += a["x"]; r["n"] += 1
     qlist = [{"q": k, "l": v["l"], "n": v["n"], "pct": round(100 * v["p"] / v["x"])} for k, v in qs.items() if v["x"]]
     qlist.sort(key=lambda r: (r["pct"], -r["n"]))
-    rs = resets()
-    since = rs[-1][0] if rs else 0
-    per, pts = all_points(sessions, tws, since)
     return {"updated": datetime.now(TZ).strftime("%Y-%m-%d %H:%M"),
-            "points": pts, "tests": [dict(t, points=per[t["id"]]) for t in known_tests()], "goal": GOAL, "unlocked": pts >= GOAL, "rewards": len(rs),
-            "since": local(since).strftime("%Y-%m-%d") if since else None,
+            "goal": GOAL, "tests": per_test(sessions, tws),
             "sessions": out_s[::-1],
             "days": [{"date": k, **v} for k, v in sorted(days.items())],
             "questions": qlist}
@@ -175,21 +185,26 @@ def main():
     ap.add_argument("--log", default=DEFAULT_LOG)
     ap.add_argument("--out", default=DEFAULT_OUT)
     ap.add_argument("--admin", action="store_true")
-    ap.add_argument("--reset", action="store_true", help="vynuluje body (odměna vyzvednuta); historie pokusů zůstane")
+    ap.add_argument("--reset", metavar="TEST", help="vynuluje body jednoho testu (id nebo začátek id) nebo 'all'; historie pokusů zůstane")
     a = ap.parse_args()
     sessions, tws = build(a.log)
     if a.reset:
-        rs = resets(); since = rs[-1][0] if rs else 0
-        per, pts = all_points(sessions, tws, since)
+        tests = per_test(sessions, tws)
+        ids = [t["id"] for t in tests]
+        if a.reset == "all":
+            targets = ids
+        else:
+            targets = [i for i in ids if i == a.reset] or [i for i in ids if i.startswith(a.reset)]
+            if len(targets) != 1:
+                sys.exit("Zadej přesně jeden test nebo 'all'. Dostupné: " + ", ".join(ids))
         with open(RESET_FILE, "a", encoding="utf-8") as f:
-            f.write("%f %d\n" % (time.time(), pts))
-        print("Reset hotov (body před resetem: %d). Odměn dosud: %d" % (pts, len(rs) + 1))
+            for t in tests:
+                if t["id"] in targets:
+                    f.write("%f %s %d\n" % (time.time(), t["id"], t["points"]))
+                    print("Reset testu %s (body před resetem: %d)." % (t["id"], t["points"]))
     elif a.admin:
-        rs = resets(); since = rs[-1][0] if rs else 0
-        per, pts = all_points(sessions, tws, since)
-        print("Body od posledního resetu: %d / %d (resetů: %d)" % (pts, GOAL, len(rs)))
-        for t, v in per.items():
-            print("  %s: %d / %d" % (t, v, GOAL))
+        for t in per_test(sessions, tws):
+            print("%s: %d / %d (vyzvednutých odměn: %d)" % (t["id"], t["points"], GOAL, t["rewards"]))
         print()
         admin(sessions); return
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)

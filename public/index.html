@@ -33,27 +33,12 @@ html{scroll-padding-top:56px}
 </style>
 </head>
 <body>
-<nav class="topnav" aria-label="Hlavní navigace"><div class="in"><a href="/" aria-current="page">Testy</a><a href="/vysvedceni/">Vysvědčení</a><a class="np" id="np" href="/vysvedceni/" hidden></a></div></nav>
+<nav class="topnav" aria-label="Hlavní navigace"><div class="in"><a href="/" aria-current="page">Testy</a><a href="/vysvedceni/">Vysvědčení</a></div></nav>
 <div class="wrap">
   <h1>Testy<br><span>pro Medu</span></h1>
   <ul>
     <li><a class="t" href="dvk-dada-devetsil-surrealismus/"><b>Dada, Devětsil, surrealismus</b><small>Dějiny výtvarné kultury · 50 otázek · příprava na test 13. 10.</small></a></li>
   </ul>
 </div>
-<script>
-(function () {
-  function refreshPts() {
-    if (typeof fetch !== "function") return;
-    fetch("/vysvedceni/data.json?" + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => {
-      const el = document.getElementById("np");
-      if (!el || typeof d.points !== "number") return;
-      el.innerHTML = "<small>Body</small>" + d.points + "/" + (d.goal || 100);
-      el.title = "Získané body za všechny testy";
-      el.hidden = false;
-    }).catch(() => {});
-  }
-  window.refreshPts = refreshPts; refreshPts();
-})();
-</script>
 </body>
 </html>
