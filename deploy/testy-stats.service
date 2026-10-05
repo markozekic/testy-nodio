@@ -1,0 +1,12 @@
+[Unit]
+Description=testy.nodio.cz - přepočet Vysvědčení po dokončení testu
+After=network.target
+
+[Service]
+User=marko
+ExecStart=/var/www/testy.nodio.cz/tools/watch-stats.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
