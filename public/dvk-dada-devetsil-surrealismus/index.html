@@ -120,6 +120,8 @@ table.sec td:last-child{text-align:right;font-family:var(--f-head);font-weight:7
 @media (prefers-reduced-motion:reduce){.track i{transition:none}}
 
 html{scroll-padding-top:56px}
+.topnav .np{margin-left:auto;align-self:center;color:var(--ink);text-decoration:none;padding:0;border:0;margin-right:0;font-variant-numeric:tabular-nums;white-space:nowrap}
+.topnav .np small{color:var(--muted);font-size:.7rem;margin-right:5px}
 .topnav{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:2px solid var(--line, #cdd3dc);padding-top:env(safe-area-inset-top)}
 .topnav .in{max-width:720px;margin:0 auto;padding-inline:16px;display:flex;gap:4px;font-family:var(--f-head);font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
 .topnav a{color:var(--ink);text-decoration:none;padding:14px 12px 11px 0;margin-right:12px;border-bottom:3px solid transparent;margin-bottom:-2px}
@@ -128,7 +130,7 @@ html{scroll-padding-top:56px}
 </style>
 </head>
 <body>
-<nav class="topnav" aria-label="Hlavní navigace"><div class="in"><a href="/" aria-current="page">Testy</a><a href="/vysvedceni/">Vysvědčení</a></div></nav>
+<nav class="topnav" aria-label="Hlavní navigace"><div class="in"><a href="/" aria-current="page">Testy</a><a href="/vysvedceni/">Vysvědčení</a><a class="np" id="np" href="/vysvedceni/" hidden></a></div></nav>
 <div class="wrap">
   <header class="mast">
     <h1><span>Dada</span><span>Devětsil</span><span>Surrealismus</span></h1>
@@ -501,7 +503,7 @@ function loadPoints() {
   fetch("../vysvedceni/data.json?" + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => {
     const el = document.getElementById("pts");
     if (!el) return;
-    const mine = d.tests && d.tests[TEST_ID] ? d.tests[TEST_ID].points : (d.tests ? 0 : d.points);
+    const me = (Array.isArray(d.tests) ? d.tests : []).find(t => t.id === TEST_ID), mine = me ? me.points : undefined;
     if (typeof mine !== "number") return;
     el.hidden = false;
     el.innerHTML = '<span>Body za tento test: ' + mine + " / " + d.goal + (mine >= d.goal ? " · zvládnuto" : "") + '</span><div class="track"><i style="width:' + mine + '%"></i></div>';
@@ -671,6 +673,7 @@ function finish() {
   const pts = results.reduce((a, r) => a + r.pts, 0), max = results.reduce((a, r) => a + r.max, 0);
   const pct = max ? Math.round(pts / max * 100) : 0;
   ping({e: "end", p: pts, x: max, mode: currentMode});
+  setTimeout(() => window.refreshPts && window.refreshPts(), 3500);
   const bySec = SECTIONS.map(s => {
     const r = results.filter(x => x.q.sec === s.id);
     if (!r.length) return "";
@@ -689,6 +692,21 @@ function finish() {
 }
 
 home();
+</script>
+<script>
+(function () {
+  function refreshPts() {
+    if (typeof fetch !== "function") return;
+    fetch("/vysvedceni/data.json?" + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => {
+      const el = document.getElementById("np");
+      if (!el || typeof d.points !== "number") return;
+      el.innerHTML = "<small>Body</small>" + d.points + "/" + (d.goal || 100);
+      el.title = "Získané body za všechny testy";
+      el.hidden = false;
+    }).catch(() => {});
+  }
+  window.refreshPts = refreshPts; refreshPts();
+})();
 </script>
 </body>
 </html>

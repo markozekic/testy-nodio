@@ -28,3 +28,5 @@ Reset (po vyzvednutí odměny): `python3 tools/make-stats.py --reset` (zapíše 
 - Hned po dokončení testu: systemd služba `deploy/testy-stats.service` (skript `tools/watch-stats.sh`) sleduje log a po události `e=end` spustí `make-stats.py`.
 - Záložně cronem každých 10 minut (výpadek služby apod.). Nedokončené pokusy se ve Vysvědčení ukazují, ale body se z nich nepočítají.
 - Po `--reset` se `data.json` vygeneruje hned.
+
+Seznam testů pro body: `public/tests.json` (id, název, odkaz). Nový test = nový záznam tam + složka v `public/` + odkaz v `public/index.html`. Test bez pokusu se do souhrnu bodů počítá jako 0.

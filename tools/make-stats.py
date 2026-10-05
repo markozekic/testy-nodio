@@ -20,6 +20,7 @@ except Exception:
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_LOG = "/var/log/caddy/testy.nodio.cz.log"
 DEFAULT_OUT = os.path.join(HERE, "..", "public", "vysvedceni", "data.json")
+TESTS_FILE = os.path.join(HERE, "..", "public", "tests.json")
 RESET_FILE = os.path.join(HERE, "resets.txt")   # řádky "epoch body", poslední = poslední reset
 GOAL = 100
 
@@ -110,9 +111,16 @@ def points(sessions, tws, since, test):
     return min(GOAL, int(math.floor(GOAL * got / total + 1e-9)))
 
 
+def known_tests():
+    try:
+        return json.load(open(TESTS_FILE, encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+
+
 def all_points(sessions, tws, since):
-    tests = sorted({s["test"] for s in sessions})
-    per = {t: points(sessions, tws, since, t) for t in tests}
+    """Body za každý test uvedený v public/tests.json (test bez pokusu = 0) a souhrn jako průměr."""
+    per = {t["id"]: points(sessions, tws, since, t["id"]) for t in known_tests()}
     overall = int(sum(per.values()) / len(per)) if per else 0
     return per, overall
 
@@ -144,7 +152,7 @@ def public_data(sessions, tws):
     since = rs[-1][0] if rs else 0
     per, pts = all_points(sessions, tws, since)
     return {"updated": datetime.now(TZ).strftime("%Y-%m-%d %H:%M"),
-            "points": pts, "tests": {t: {"points": v} for t, v in per.items()}, "goal": GOAL, "unlocked": pts >= GOAL, "rewards": len(rs),
+            "points": pts, "tests": [dict(t, points=per[t["id"]]) for t in known_tests()], "goal": GOAL, "unlocked": pts >= GOAL, "rewards": len(rs),
             "since": local(since).strftime("%Y-%m-%d") if since else None,
             "sessions": out_s[::-1],
             "days": [{"date": k, **v} for k, v in sorted(days.items())],

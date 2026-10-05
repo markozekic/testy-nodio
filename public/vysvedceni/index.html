@@ -63,6 +63,8 @@ td.n,th.n{text-align:right;white-space:nowrap}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
 html{scroll-padding-top:56px}
+.topnav .np{margin-left:auto;align-self:center;color:var(--ink);text-decoration:none;padding:0;border:0;margin-right:0;font-variant-numeric:tabular-nums;white-space:nowrap}
+.topnav .np small{color:var(--muted);font-size:.7rem;margin-right:5px}
 .topnav{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:2px solid var(--line, #cdd3dc);padding-top:env(safe-area-inset-top)}
 .topnav .in{max-width:720px;margin:0 auto;padding-inline:16px;display:flex;gap:4px;font-family:var(--f-head);font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
 .topnav a{color:var(--ink);text-decoration:none;padding:14px 12px 11px 0;margin-right:12px;border-bottom:3px solid transparent;margin-bottom:-2px}
@@ -71,13 +73,12 @@ html{scroll-padding-top:56px}
 </style>
 </head>
 <body>
-<nav class="topnav" aria-label="Hlavní navigace"><div class="in"><a href="/">Testy</a><a href="/vysvedceni/" aria-current="page">Vysvědčení</a></div></nav>
+<nav class="topnav" aria-label="Hlavní navigace"><div class="in"><a href="/">Testy</a><a href="/vysvedceni/" aria-current="page">Vysvědčení</a><a class="np" id="np" href="/vysvedceni/" hidden></a></div></nav>
 <div class="wrap">
   <h1>Vysvě<span>dčení</span></h1>
   <div id="app"><p class="empty">Načítám…</p></div>
 </div>
 <script>
-const TESTS = [{id: "dvk-dada-devetsil-surrealismus", name: "Dada, Devětsil, surrealismus", href: "/dvk-dada-devetsil-surrealismus/"}];
 const MODES = {obr:"Poznávačka: díla s obrázkem", popis:"Poznávačka: díla podle popisu", dada:"Teorie: dada", dev:"Teorie: Devětsil", sur:"Teorie: surrealismus", pojmy:"Pojmy a přiřazování", cas:"Časová osa", all:"Celý test", redo:"Opakování chyb", again:"Znovu stejná část"};
 const MONTHS = ["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
 const $ = document.getElementById("app");
@@ -98,7 +99,7 @@ function render(d) {
   const best = done.length ? Math.max(...done.map(s => s.pct)) : null;
   const last = done.length ? done[0].pct : null;
   let h = "";
-  const per = TESTS.map(t => ({t, p: d.tests && d.tests[t.id] ? d.tests[t.id].points : 0}));
+  const per = (Array.isArray(d.tests) ? d.tests : []).map(t => ({t, p: t.points || 0}));
   const overall = Math.floor(per.reduce((a, x) => a + x.p, 0) / Math.max(per.length, 1));
   const unlocked = per.length > 0 && per.every(x => x.p >= d.goal);
   h += '<div class="pts"><span class="lab">Body za zvládnuté otázky' + (per.length > 1 ? " · celkem" : "") + '</span><b>' + overall + " / " + d.goal + '</b><div class="tr"><i style="width:' + overall + '%"></i></div>' +
@@ -164,6 +165,21 @@ function drawChart(rows) {
     el.addEventListener("mouseleave", () => tip.style.display = "none"); el.addEventListener("blur", () => tip.style.display = "none");
   });
 }
+</script>
+<script>
+(function () {
+  function refreshPts() {
+    if (typeof fetch !== "function") return;
+    fetch("/vysvedceni/data.json?" + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => {
+      const el = document.getElementById("np");
+      if (!el || typeof d.points !== "number") return;
+      el.innerHTML = "<small>Body</small>" + d.points + "/" + (d.goal || 100);
+      el.title = "Získané body za všechny testy";
+      el.hidden = false;
+    }).catch(() => {});
+  }
+  window.refreshPts = refreshPts; refreshPts();
+})();
 </script>
 </body>
 </html>
