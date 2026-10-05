@@ -95,10 +95,10 @@ def resets():
 
 
 def points(sessions, tws, since, test):
-    """Body 0..GOAL pro jeden test: každá otázka se počítá nejlepším dosaženým poměrem od posledního resetu, váhou je počet dílčích bodů."""
+    """Body 0..GOAL pro jeden test: každá otázka se počítá nejlepším dosaženým poměrem z dokončených testů od posledního resetu, váhou je počet dílčích bodů."""
     best, weight = {}, {}
     for s in sessions:
-        if s["test"] != test:
+        if s["test"] != test or not s["ended"]:   # body jen z dokončených testů
             continue
         for a in s["answers"]:
             if a["ts"] <= since:

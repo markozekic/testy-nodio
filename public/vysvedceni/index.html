@@ -100,7 +100,7 @@ function render(d) {
   const overall = Math.floor(per.reduce((a, x) => a + x.p, 0) / Math.max(per.length, 1));
   const unlocked = per.length > 0 && per.every(x => x.p >= d.goal);
   h += '<div class="pts"><span class="lab">Body za zvládnuté otázky' + (per.length > 1 ? " · celkem" : "") + '</span><b>' + overall + " / " + d.goal + '</b><div class="tr"><i style="width:' + overall + '%"></i></div>' +
-    (unlocked ? '<span class="win">Odměna odemčena! Všechny otázky zvládnuté.</span>' : '<span class="note" style="margin:0">Počítá se nejlepší výsledek každé otázky. ' + d.goal + " bodů = všechny otázky správně." + (d.rewards ? " Dosud vyzvednutých odměn: " + d.rewards + "." : "") + "</span>") +
+    (unlocked ? '<span class="win">Odměna odemčena! Všechny otázky zvládnuté.</span>' : '<span class="note" style="margin:0">Počítá se nejlepší výsledek každé otázky z dokončených testů. ' + d.goal + " bodů = všechny otázky správně." + (d.rewards ? " Dosud vyzvednutých odměn: " + d.rewards + "." : "") + "</span>") +
     '<ul class="pl">' + per.map(x => '<li><a href="' + x.t.href + '">' + esc(x.t.name) + '</a><span class="tr"><i style="width:' + x.p + '%"></i></span><b>' + x.p + " / " + d.goal + "</b></li>").join("") + "</ul>" + "</div>";
   h += '<div class="tiles">' +
     tile(S.length, "spuštěných pokusů") + tile(done.length, "dokončených") + tile(days, days === 1 ? "den procvičování" : days >= 2 && days <= 4 ? "dny procvičování" : "dní procvičování") +
