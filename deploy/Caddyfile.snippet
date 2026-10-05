@@ -1,11 +1,22 @@
-# Přidej do Caddyfile na VPS a spusť: sudo systemctl reload caddy
+# Blok pro testy.nodio.cz (na VPS je v /etc/caddy/testy.caddy, hlavní Caddyfile ho načítá přes import).
 # Přístup: uživatel meda, heslo dvk (v souboru je jen bcrypt hash).
+# Log /var/log/caddy/testy.nodio.cz.log obsahuje požadavky na /ping.gif, ze kterých tools/make-stats.py skládá Vysvědčení.
 testy.nodio.cz {
 	root * /var/www/testy.nodio.cz/public
-	basicauth {
+	basic_auth {
 		meda $2a$12$J0Cpk8luSF1MEG1haR/lCeaZBoiCAW0j.MAm2EsMzH1wZavUvmov6
 	}
 	header X-Robots-Tag "noindex, nofollow"
+	@live path /ping.gif /vysvedceni/data.json
+	header @live Cache-Control "no-store"
 	encode zstd gzip
+	log {
+		output file /var/log/caddy/testy.nodio.cz.log {
+			mode 0644
+			roll_size 10MiB
+			roll_keep 20
+		}
+		format json
+	}
 	file_server
 }

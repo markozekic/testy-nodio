@@ -96,6 +96,7 @@ button,select{font:inherit;color:inherit}
 .btn:hover:not(:disabled){background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn:disabled{opacity:.35;cursor:default}
 .btn.ghost{background:transparent;color:var(--ink)}
+a.btn{display:inline-block;text-decoration:none}
 .fb{border:2px solid var(--ink);padding:12px 14px;display:grid;gap:8px}
 .fb.good{border-color:var(--good);background:var(--good-bg)}
 .fb.bad{border-color:var(--bad);background:var(--bad-bg)}
@@ -443,6 +444,27 @@ const srcHtml = list => '<div class="src">Zdroje: ' + list.filter(Boolean).map(s
 
 let queue = [], qi = 0, results = [], currentLabel = "";
 
+/* --- ukládání výsledků: malé požadavky na /ping.gif, které zaznamená webserver (viz Vysvědčení) --- */
+const TEST_ID = "dvk-dada-devetsil-surrealismus";
+let sid = "", currentMode = "";
+function ping(p) {
+  try {
+    const qs = new URLSearchParams(Object.assign({t: TEST_ID, s: sid}, p));
+    qs.set("r", Date.now().toString(36));
+    new Image().src = "/ping.gif?" + qs.toString();
+  } catch (e) { /* bez ukládání test funguje dál */ }
+}
+function qid(q) {
+  if (!q._id) {
+    const k = (q.prompt || q.desc || q.file || "") + "|" + (q.fields ? q.fields[0].o[0] : q.rows ? q.rows[0].l : q.items[0].t);
+    let h = 5381;
+    for (let i = 0; i < k.length; i++) h = ((h << 5) + h + k.charCodeAt(i)) | 0;
+    q._id = q.sec + "-" + (h >>> 0).toString(36);
+  }
+  return q._id;
+}
+function logAns(q, p, x) { ping({e: "ans", q: qid(q), l: labelOf(q).slice(0, 70), p: p, x: x}); }
+
 function home() {
   queue = []; results = [];
   const tiles = SECTIONS.map(s => {
@@ -451,17 +473,24 @@ function home() {
   }).join("");
   $app.innerHTML = '<p class="lead">Vyber část, nebo spusť celý test. Po každé otázce se hned ukáže správná odpověď s vysvětlením a zdrojem. Na konci si můžeš zopakovat jen otázky, které se nepovedly.</p>' +
     '<div class="modes">' + tiles + '<button class="mode all" data-sec="all"><b>Celý test, promíchaně</b><small>' + BANK.length + " otázek ze všech částí</small></button></div>" +
-    '<p class="foot">Obrázky děl se načítají z Wikimedia Commons, takže je potřeba připojení k internetu. U každé otázky najdeš odkazy na zdroje, ze kterých údaje pocházejí.</p>';
+    '<p class="foot">Obrázky děl se načítají z Wikimedia Commons, takže je potřeba připojení k internetu. U každé otázky najdeš odkazy na zdroje, ze kterých údaje pocházejí.</p>' +
+    '<p class="foot">Průběh a výsledky se ukládají a zobrazují se na stránce <a href="../vysvedceni/">Vysvědčení</a>.</p>';
   $app.querySelectorAll(".mode").forEach(b => b.addEventListener("click", () => {
     const id = b.dataset.sec;
     const pool = id === "all" ? BANK : BANK.filter(q => q.sec === id);
     currentLabel = id === "all" ? "Celý test" : SECTIONS.find(s => s.id === id).name;
-    begin(pool);
+    begin(pool, id);
   }));
   window.scrollTo(0, 0);
 }
 
-function begin(pool) { queue = shuffle(pool); qi = 0; results = []; show(); }
+function begin(pool, mode) {
+  queue = shuffle(pool); qi = 0; results = [];
+  sid = Math.random().toString(36).slice(2, 10);
+  currentMode = mode || "all";
+  ping({e: "start", n: queue.length, mode: currentMode});
+  show();
+}
 
 function show() {
   if (qi >= queue.length) return finish();
@@ -534,6 +563,7 @@ function renderFields(q, stage) {
     if (cap && q.file) cap.innerHTML = 'Obrázek: <a href="' + esc(filePage(q.file)) + '" target="_blank" rel="noopener">Wikimedia Commons</a> (volné dílo)';
     card.querySelector("#fbslot").innerHTML = feedback(q, pts, q.fields.length);
     results.push({q, pts, max: q.fields.length});
+    logAns(q, pts, q.fields.length);
     nextBtn(stage);
   });
 }
@@ -560,6 +590,7 @@ function renderMatch(q, stage) {
     check.parentElement.remove();
     card.querySelector("#fbslot").innerHTML = feedback(q, pts, q.rows.length);
     results.push({q, pts, max: q.rows.length});
+    logAns(q, pts, q.rows.length);
     nextBtn(stage);
   });
 }
@@ -595,6 +626,7 @@ function renderOrder(q, stage) {
     card.querySelector(".act").remove();
     card.querySelector("#fbslot").innerHTML = feedback(q, pts, items.length).replace("</div>", fix + "</div>");
     results.push({q, pts, max: items.length});
+    logAns(q, pts, items.length);
     nextBtn(stage);
   });
 }
@@ -614,6 +646,7 @@ function labelOf(q) {
 function finish() {
   const pts = results.reduce((a, r) => a + r.pts, 0), max = results.reduce((a, r) => a + r.max, 0);
   const pct = max ? Math.round(pts / max * 100) : 0;
+  ping({e: "end", p: pts, x: max, mode: currentMode});
   const bySec = SECTIONS.map(s => {
     const r = results.filter(x => x.q.sec === s.id);
     if (!r.length) return "";
@@ -623,10 +656,10 @@ function finish() {
   const wrong = results.filter(r => r.pts < r.max);
   const mist = wrong.length ? '<h2 class="prompt">K zopakování</h2><ul class="mist">' + wrong.map(r => "<li><b>" + esc(labelOf(r.q)) + "</b><span>" + esc(correctText(r.q)) + "</span></li>").join("") + "</ul>" : '<p class="prompt">Bez chyby.</p>';
   $app.innerHTML = '<div class="card"><div class="tag">' + esc(currentLabel) + '</div><div class="score">' + pct + "<small> %</small></div><p>" + pts + " z " + max + ' bodů</p><table class="sec">' + bySec + "</table>" + mist +
-    '<div class="act">' + (wrong.length ? '<button class="btn" id="redo">Zopakovat chyby</button>' : "") + '<button class="btn ghost" id="again">Znovu stejnou část</button><button class="btn ghost" id="menu">Zpět na výběr</button></div></div>';
+    '<div class="act">' + (wrong.length ? '<button class="btn" id="redo">Zopakovat chyby</button>' : "") + '<button class="btn ghost" id="again">Znovu stejnou část</button><button class="btn ghost" id="menu">Zpět na výběr</button><a class="btn ghost" href="../vysvedceni/">Vysvědčení</a></div></div>';
   const doneQs = results.map(r => r.q);
-  if (wrong.length) document.getElementById("redo").addEventListener("click", () => begin(wrong.map(r => r.q)));
-  document.getElementById("again").addEventListener("click", () => begin(doneQs));
+  if (wrong.length) document.getElementById("redo").addEventListener("click", () => begin(wrong.map(r => r.q), "redo"));
+  document.getElementById("again").addEventListener("click", () => begin(doneQs, "again"));
   document.getElementById("menu").addEventListener("click", home);
   window.scrollTo(0, 0);
 }

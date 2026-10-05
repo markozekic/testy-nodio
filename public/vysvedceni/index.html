@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Vysvědčení</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800;900&family=Source+Serif+4:wght@400;600&display=swap">
+<style>
+:root{--bg:#eceff3;--surface:#fff;--ink:#151a22;--muted:#566070;--line:#cdd3dc;--grid:#e1e5ea;--accent:#c8322b;--pick:#e9edf8;--link:#2447a8;
+  --f-head:"Archivo","Helvetica Neue",Arial,sans-serif;--f-body:"Source Serif 4",Georgia,serif}
+@media (prefers-color-scheme:dark){:root{--bg:#12151b;--surface:#1b2029;--ink:#eceff4;--muted:#9aa4b2;--line:#303846;--grid:#272e3a;--accent:#ef5b52;--pick:#26304a;--link:#93abff;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:18px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:20px 56px}
+a{color:var(--link)}
+h1{margin:0 0 18px;padding-bottom:16px;border-bottom:6px solid var(--ink);font-family:var(--f-head);font-weight:900;text-transform:uppercase;line-height:.95;font-size:clamp(2.1rem,9.5vw,3.4rem)}
+h1 span{color:var(--accent)}
+h2{margin:30px 0 10px;font-family:var(--f-head);font-weight:800;font-size:1.05rem;text-transform:uppercase;letter-spacing:.04em}
+.back{font-family:var(--f-head);font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+.tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:16px}
+.tile{background:var(--surface);border:2px solid var(--ink);padding:10px 14px}
+.tile b{display:block;font-family:var(--f-head);font-weight:900;font-size:2rem;line-height:1.1}
+.tile small{color:var(--muted);font-size:.85rem}
+.card{background:var(--surface);border:2px solid var(--ink);padding:14px;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:30px 0 10px}
+.head h2{margin:0}
+.tog{background:none;border:0;padding:4px 0;cursor:pointer;color:var(--link);text-decoration:underline;font:inherit;font-size:.85rem}
+.note{color:var(--muted);font-size:.85rem;margin:8px 0 0}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .gl{stroke:var(--grid);stroke-width:1}
+.chart text{fill:var(--muted);font-family:var(--f-head);font-size:14px}
+.chart .b{fill:var(--accent);pointer-events:none}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .hit:hover+.b,.chart .hit:focus+.b{opacity:.75}
+.chart .hit:focus{outline:none}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--f-head);font-size:.8rem;line-height:1.35;padding:6px 9px;border-radius:2px;white-space:nowrap;transform:translate(-50%,-100%);display:none;z-index:2}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-head);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td.n,th.n{text-align:right;white-space:nowrap}
+.tw{overflow-x:auto}
+.weak{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.weak li{display:grid;gap:4px}
+.weak .t{font-size:.95rem;line-height:1.3}
+.weak .r{display:flex;align-items:center;gap:10px;font-family:var(--f-head);font-size:.8rem;color:var(--muted)}
+.weak .tr{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.weak .tr i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.empty{padding:6px 0}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../">← Testy</a>
+  <h1 style="margin-top:12px">Vysvě<span>dčení</span></h1>
+  <div id="app"><p class="empty">Načítám…</p></div>
+</div>
+<script>
+const MODES = {obr:"Poznávačka: díla s obrázkem", popis:"Poznávačka: díla podle popisu", dada:"Teorie: dada", dev:"Teorie: Devětsil", sur:"Teorie: surrealismus", pojmy:"Pojmy a přiřazování", cas:"Časová osa", all:"Celý test", redo:"Opakování chyb", again:"Znovu stejná část"};
+const MONTHS = ["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
+const $ = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dayLabel = d => { const [y, m, dd] = d.split("-").map(Number); return dd + ". " + m + "."; };
+const dayFull = d => { const [y, m, dd] = d.split("-").map(Number); return dd + ". " + MONTHS[m - 1]; };
+
+fetch("data.json?" + Date.now()).then(r => { if (!r.ok) throw 0; return r.json(); }).then(render).catch(() => {
+  $.innerHTML = '<p class="empty">Zatím tu nic není. Jakmile Meda poprvé spustí test, objeví se tu její průběh.</p>';
+});
+
+function render(d) {
+  const S = d.sessions || [];
+  if (!S.length) { $.innerHTML = '<p class="empty">Zatím tu nic není. Jakmile Meda poprvé spustí test, objeví se tu její průběh.</p>'; return; }
+  const done = S.filter(s => s.done && s.pct !== null);
+  const chrono = done.slice().reverse().slice(-30);
+  const days = (d.days || []).length;
+  const best = done.length ? Math.max(...done.map(s => s.pct)) : null;
+  const last = done.length ? done[0].pct : null;
+  let h = '<div class="tiles">' +
+    tile(S.length, "spuštěných pokusů") + tile(done.length, "dokončených") + tile(days, days === 1 ? "den procvičování" : days >= 2 && days <= 4 ? "dny procvičování" : "dní procvičování") +
+    (best !== null ? tile(best + " %", "nejlepší výsledek") : "") + (last !== null ? tile(last + " %", "poslední dokončený") : "") + "</div>";
+
+  if (chrono.length) {
+    h += '<div class="head"><h2>Výsledky dokončených pokusů</h2><button class="tog" id="tog" type="button">Zobrazit tabulku</button></div>' +
+      '<div class="card"><div class="chart" id="chart"></div><div class="tw" id="tbl" hidden>' + table(chrono.slice().reverse()) + '</div>' +
+      '<p class="note">Procento získaných bodů. Posledních ' + chrono.length + ' dokončených pokusů, zleva od nejstaršího.</p></div>';
+  } else {
+    h += '<p class="note">Zatím nebyl dokončen žádný pokus, graf se objeví po prvním dokončeném.</p>';
+  }
+
+  const weak = (d.questions || []).filter(q => q.pct < 100).slice(0, 8);
+  if (weak.length) {
+    h += "<h2>Na co se zaměřit</h2><div class=\"card\"><ul class=\"weak\">" + weak.map(q =>
+      '<li><span class="t">' + esc(q.l) + '</span><span class="r"><span class="tr"><i style="width:' + q.pct + '%"></i></span><span>' + q.pct + " % · " + q.n + "× zodpovězeno</span></span></li>").join("") +
+      '</ul><p class="note">Otázky s nejnižší úspěšností napříč všemi pokusy. Pomůže „Zopakovat chyby“ na konci testu.</p></div>';
+  }
+
+  h += '<h2>Všechny pokusy</h2><div class="card"><div class="tw">' + table(S) + '</div></div>' +
+    '<p class="note">Aktualizováno ' + esc(d.updated || "") + ". Stránka se obnovuje zhruba každých pět minut.</p>";
+  $.innerHTML = h;
+  if (chrono.length) { drawChart(chrono); document.getElementById("tog").addEventListener("click", e => {
+    const t = document.getElementById("tbl"), c = document.getElementById("chart");
+    const showT = t.hidden; t.hidden = !showT; c.hidden = showT; e.target.textContent = showT ? "Zobrazit graf" : "Zobrazit tabulku"; }); }
+}
+const tile = (v, l) => '<div class="tile"><b>' + v + "</b><small>" + l + "</small></div>";
+function table(rows) {
+  return "<table><thead><tr><th>Kdy</th><th>Část</th><th class=\"n\">Otázek</th><th class=\"n\">Výsledek</th></tr></thead><tbody>" + rows.map(s =>
+    "<tr><td>" + dayFull(s.date) + " " + s.time + "</td><td>" + esc(MODES[s.mode] || s.mode || "–") + "</td><td class=\"n\">" + s.answered + (s.n ? " / " + s.n : "") +
+    "</td><td class=\"n\">" + (s.done && s.pct !== null ? s.pct + " %" : "nedokončeno") + "</td></tr>").join("") + "</tbody></table>";
+}
+
+function drawChart(rows) {
+  const W = 400, H = 220, L = 44, R = 6, T = 10, B = 34, pw = W - L - R, ph = H - T - B;
+  const step = pw / rows.length, bw = Math.min(14, step * 0.6);
+  let g = "";
+  [0, 50, 100].forEach(v => { const y = T + ph - ph * v / 100; g += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '"/><text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + v + ' %</text>'; });
+  rows.forEach((s, i) => {
+    const cx = L + step * i + step / 2, bh = Math.max(2, ph * s.pct / 100), y = T + ph - bh;
+    const r = Math.min(4, bh / 2), x = cx - bw / 2;
+    const path = "M" + x + "," + (T + ph) + "V" + (y + r) + "Q" + x + "," + y + " " + (x + r) + "," + y + "H" + (x + bw - r) + "Q" + (x + bw) + "," + y + " " + (x + bw) + "," + (y + r) + "V" + (T + ph) + "Z";
+    g += '<g><rect class="hit" tabindex="0" x="' + (cx - step / 2) + '" y="' + T + '" width="' + step + '" height="' + ph + '" data-i="' + i + '" role="img" aria-label="' + dayFull(s.date) + ", " + s.pct + ' %"/><path class="b" d="' + path + '"/></g>';
+    if (rows.length <= 8 || i % Math.ceil(rows.length / 6) === 0 || i === rows.length - 1) g += '<text x="' + cx + '" y="' + (H - 14) + '" text-anchor="middle">' + dayLabel(s.date) + "</text>";
+  });
+  const box = document.getElementById("chart");
+  box.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" role="group" aria-label="Výsledky dokončených pokusů">' + g + '</svg><div class="tip" id="tip"></div>';
+  const tip = document.getElementById("tip");
+  const show = el => {
+    const s = rows[+el.dataset.i], b = el.getBoundingClientRect(), c = box.getBoundingClientRect();
+    tip.innerHTML = "<b>" + s.pct + " %</b> · " + s.p + " / " + s.x + " bodů<br>" + dayFull(s.date) + " " + s.time + "<br>" + esc(MODES[s.mode] || s.mode || "");
+    tip.style.display = "block";
+    tip.style.left = Math.min(Math.max(b.left - c.left + b.width / 2, 70), c.width - 70) + "px";
+    tip.style.top = (b.top - c.top + b.height * (1 - s.pct / 100) - 6) + "px";
+  };
+  box.querySelectorAll(".hit").forEach(el => {
+    el.addEventListener("mouseenter", () => show(el)); el.addEventListener("focus", () => show(el)); el.addEventListener("click", () => show(el));
+    el.addEventListener("mouseleave", () => tip.style.display = "none"); el.addEventListener("blur", () => tip.style.display = "none");
+  });
+}
+</script>
+</body>
+</html>
