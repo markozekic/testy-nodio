@@ -97,6 +97,9 @@ button,select{font:inherit;color:inherit}
 .btn:disabled{opacity:.35;cursor:default}
 .btn.ghost{background:transparent;color:var(--ink)}
 a.btn{display:inline-block;text-decoration:none}
+.pts{display:grid;gap:6px;margin:0 0 18px;font-family:var(--f-head);font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.pts .track{height:10px}
+.pts a{color:inherit}
 .fb{border:2px solid var(--ink);padding:12px 14px;display:grid;gap:8px}
 .fb.good{border-color:var(--good);background:var(--good-bg)}
 .fb.bad{border-color:var(--bad);background:var(--bad-bg)}
@@ -471,7 +474,7 @@ function home() {
     const n = BANK.filter(q => q.sec === s.id).length;
     return '<button class="mode" data-sec="' + s.id + '"><b>' + esc(s.name) + '</b><small>' + n + " otázek · " + esc(s.desc) + "</small></button>";
   }).join("");
-  $app.innerHTML = '<p class="lead">Vyber část, nebo spusť celý test. Po každé otázce se hned ukáže správná odpověď s vysvětlením a zdrojem. Na konci si můžeš zopakovat jen otázky, které se nepovedly.</p>' +
+  $app.innerHTML = '<div class="pts" id="pts" hidden></div><p class="lead">Vyber část, nebo spusť celý test. Po každé otázce se hned ukáže správná odpověď s vysvětlením a zdrojem. Na konci si můžeš zopakovat jen otázky, které se nepovedly.</p>' +
     '<div class="modes">' + tiles + '<button class="mode all" data-sec="all"><b>Celý test, promíchaně</b><small>' + BANK.length + " otázek ze všech částí</small></button></div>" +
     '<p class="foot">Obrázky děl se načítají z Wikimedia Commons, takže je potřeba připojení k internetu. U každé otázky najdeš odkazy na zdroje, ze kterých údaje pocházejí.</p>' +
     '<p class="foot">Průběh a výsledky se ukládají a zobrazují se na stránce <a href="../vysvedceni/">Vysvědčení</a>.</p>';
@@ -481,14 +484,25 @@ function home() {
     currentLabel = id === "all" ? "Celý test" : SECTIONS.find(s => s.id === id).name;
     begin(pool, id);
   }));
+  loadPoints();
   window.scrollTo(0, 0);
+}
+
+function loadPoints() {
+  if (typeof fetch !== "function") return;
+  fetch("../vysvedceni/data.json?" + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => {
+    const el = document.getElementById("pts");
+    if (!el || typeof d.points !== "number") return;
+    el.hidden = false;
+    el.innerHTML = '<span>Body: ' + d.points + " / " + d.goal + (d.unlocked ? " · odměna odemčena" : "") + '</span><div class="track"><i style="width:' + d.points + '%"></i></div>';
+  }).catch(() => {});
 }
 
 function begin(pool, mode) {
   queue = shuffle(pool); qi = 0; results = [];
   sid = Math.random().toString(36).slice(2, 10);
   currentMode = mode || "all";
-  ping({e: "start", n: queue.length, mode: currentMode});
+  ping({e: "start", n: queue.length, mode: currentMode, tw: BANK.reduce((a, q) => a + (q.fields ? q.fields.length : q.rows ? q.rows.length : q.items.length), 0)});
   show();
 }
 

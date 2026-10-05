@@ -17,3 +17,8 @@ Pro přehled s IP adresami a prohlížečem (jen pro správce): `python3 tools/m
 
 Poznámky: data jdou z prohlížeče, takže jdou teoreticky podvrhnout (pro studijní účely stačí). `data.json` je v `.gitignore`.
 Nastavení VPS: viz `deploy/Caddyfile.snippet` (log, hlavičky) a cron v README výše.
+
+### Body a odměna
+
+Body 0–100 se počítají z logu: každá otázka se počítá nejlepším dosaženým výsledkem od posledního resetu, váhou je počet dílčích odpovědí. 100 bodů = všechny otázky správně. Zobrazují se v testu (úvodní obrazovka) a ve Vysvědčení.
+Reset (po vyzvednutí odměny): `python3 tools/make-stats.py --reset` (zapíše se do `tools/resets.txt`, historie pokusů zůstane).
