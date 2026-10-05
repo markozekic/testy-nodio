@@ -39,7 +39,7 @@ h2{margin:30px 0 10px;font-family:var(--f-head);font-weight:800;font-size:1.05re
 .tog{background:none;border:0;padding:4px 0;cursor:pointer;color:var(--link);text-decoration:underline;font:inherit;font-size:.85rem}
 .note{color:var(--muted);font-size:.85rem;margin:8px 0 0}
 .chart{position:relative}
-.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart svg{display:block;width:100%;max-width:520px;margin:0 auto;height:auto;overflow:visible}
 .chart .gl{stroke:var(--grid);stroke-width:1}
 .chart text{fill:var(--muted);font-family:var(--f-head);font-size:14px}
 .chart .b{fill:var(--accent);pointer-events:none}
@@ -62,15 +62,17 @@ td.n,th.n{text-align:right;white-space:nowrap}
 [hidden]{display:none!important}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
-.topnav{display:flex;gap:4px;margin:-4px 0 18px;padding-bottom:10px;border-bottom:2px solid var(--line, #cdd3dc);font-family:var(--f-head);font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
-.topnav a{color:var(--ink);text-decoration:none;padding:6px 12px 6px 0;margin-right:12px;border-bottom:3px solid transparent}
+html{scroll-padding-top:56px}
+.topnav{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:2px solid var(--line, #cdd3dc);padding-top:env(safe-area-inset-top)}
+.topnav .in{max-width:720px;margin:0 auto;padding-inline:16px;display:flex;gap:4px;font-family:var(--f-head);font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+.topnav a{color:var(--ink);text-decoration:none;padding:14px 12px 11px 0;margin-right:12px;border-bottom:3px solid transparent;margin-bottom:-2px}
 .topnav a:hover{border-bottom-color:var(--muted)}
 .topnav a[aria-current="page"]{border-bottom-color:var(--accent)}
 </style>
 </head>
 <body>
+<nav class="topnav" aria-label="Hlavní navigace"><div class="in"><a href="/">Testy</a><a href="/vysvedceni/" aria-current="page">Vysvědčení</a></div></nav>
 <div class="wrap">
-  <nav class="topnav" aria-label="Hlavní navigace"><a href="/">Testy</a><a href="/vysvedceni/" aria-current="page">Vysvědčení</a></nav>
   <h1>Vysvě<span>dčení</span></h1>
   <div id="app"><p class="empty">Načítám…</p></div>
 </div>
