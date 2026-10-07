@@ -30,3 +30,9 @@ Odměna a reset jsou po jednotlivých testech. Reset jednoho testu po vyzvednut�
 - Po `--reset` se `data.json` vygeneruje hned.
 
 Seznam testů pro body: `public/tests.json` (id, název, odkaz). Nový test = nový záznam tam + složka v `public/` + odkaz v `public/index.html`. Test bez pokusu se do souhrnu bodů počítá jako 0.
+
+### Logy a trvalá historie
+
+Stránka `public/logy/` (odkaz v zápatí Vysvědčení) ukazuje otevření stránek a spuštění/dokončení testů s časem, zařízením a IP adresou s maskovanou poslední částí.
+Při každém spuštění `tools/make-stats.py` se nové události z logu Caddy připíšou do `tools/history.jsonl` (jen na serveru, v `.gitignore`), takže se historie neztratí, ani když se log smaže nebo otočí.
+Neodstraňuj `tools/history.jsonl`. Log už mazat není potřeba.

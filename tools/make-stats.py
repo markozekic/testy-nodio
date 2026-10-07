@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Z logu Caddy (JSON) udělá public/vysvedceni/data.json pro stránku Vysvědčení.
+"""Z logu Caddy (JSON) udělá public/vysvedceni/data.json (Vysvědčení) a public/logy/data.json (Logy).
+Nové události z logu se při každém spuštění připíšou do tools/history.jsonl, takže se historie neztratí,
+ani když se log smaže nebo otočí.
 
 Použití:
   python3 tools/make-stats.py                     # vygeneruje data.json (bez IP adres)
@@ -21,6 +23,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_LOG = "/var/log/caddy/testy.nodio.cz.log"
 DEFAULT_OUT = os.path.join(HERE, "..", "public", "vysvedceni", "data.json")
 TESTS_FILE = os.path.join(HERE, "..", "public", "tests.json")
+HISTORY_FILE = os.path.join(HERE, "history.jsonl")   # trvalá historie událostí z logu (jen na serveru)
+LOGY_OUT = os.path.join(HERE, "..", "public", "logy", "data.json")
 RESET_FILE = os.path.join(HERE, "resets.txt")   # řádky "epoch body", poslední = poslední reset
 GOAL = 100
 
@@ -29,11 +33,28 @@ def open_any(path):
     return gzip.open(path, "rt", encoding="utf-8", errors="replace") if path.endswith(".gz") else open(path, encoding="utf-8", errors="replace")
 
 
-def read_events(log):
+def page_path(path):
+    """Cesty stránek, které se ukazují v Logách (ne data a obrázky)."""
+    return path == "/" or (path.endswith("/") and path.count("/") == 2)
+
+
+def ingest(log):
+    """Připíše nové události z logu do trvalé historie a vrátí všechny události seřazené podle času."""
+    have, events = set(), []
+    try:
+        with open(HISTORY_FILE, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    e = json.loads(line)
+                except ValueError:
+                    continue
+                events.append(e)
+                have.add((e["ts"], e["ip"], e["u"]))
+    except OSError:
+        pass
     base = log[:-4] if log.endswith(".log") else log   # Caddy otočené soubory se jmenují název-datum.log
-    files = sorted(glob.glob(base + "*"))
-    seen = set()
-    for f in files:
+    fresh = []
+    for f in sorted(glob.glob(base + "*")):
         try:
             fh = open_any(f)
         except OSError:
@@ -44,20 +65,67 @@ def read_events(log):
                     d = json.loads(line)
                     req = d["request"]
                     u = urlsplit(req["uri"])
+                    ts = round(float(d["ts"]), 3)
                 except Exception:
                     continue
-                if u.path != "/ping.gif" or d.get("status", 200) >= 400:
+                if d.get("status", 200) >= 400 or req.get("method", "GET") != "GET":
                     continue
-                q = {k: v[0] for k, v in parse_qs(u.query).items()}
-                if not q.get("s") or q.get("e") not in ("start", "ans", "end"):
+                if u.path != "/ping.gif" and not page_path(u.path):
                     continue
-                key = (q["s"], q["e"], q.get("q", ""), q.get("r", ""))
-                if key in seen:
-                    continue
-                seen.add(key)
-                ua = (req.get("headers", {}).get("User-Agent") or [""])[0]
                 ip = req.get("client_ip") or req.get("remote_ip") or ""
-                yield float(d.get("ts", 0)), q, ip, ua
+                key = (ts, ip, req["uri"])
+                if key in have:
+                    continue
+                have.add(key)
+                ua = (req.get("headers", {}).get("User-Agent") or [""])[0]
+                e = {"ts": ts, "ip": ip, "ua": ua, "u": req["uri"]}
+                fresh.append(e); events.append(e)
+    if fresh:
+        try:
+            with open(HISTORY_FILE, "a", encoding="utf-8") as fh:
+                for e in fresh:
+                    fh.write(json.dumps(e, ensure_ascii=False, separators=(",", ":")) + "\n")
+        except OSError as ex:
+            print("Upozornění: historii nelze zapsat:", ex, file=sys.stderr)
+    events.sort(key=lambda e: e["ts"])
+    return events
+
+
+def read_events(log):
+    seen = set()
+    for e in ingest(log):
+        u = urlsplit(e["u"])
+        if u.path != "/ping.gif":
+            continue
+        q = {k: v[0] for k, v in parse_qs(u.query).items()}
+        if not q.get("s") or q.get("e") not in ("start", "ans", "end"):
+            continue
+        key = (q["s"], q["e"], q.get("q", ""), q.get("r", ""))
+        if key in seen:
+            continue
+        seen.add(key)
+        yield e["ts"], q, e["ip"], e["ua"]
+
+
+def page_views(log):
+    return [e for e in ingest(log) if page_path(urlsplit(e["u"]).path)]
+
+
+def device(ua):
+    """Zařízení a prohlížeč z User-Agent (jen hrubě)."""
+    u = ua or ""
+    dev = ("iPhone" if "iPhone" in u else "iPad" if "iPad" in u else "Android" if "Android" in u else
+           "Mac" if "Macintosh" in u else "Windows" if "Windows" in u else "Linux" if "Linux" in u else "?")
+    br = ("Edge" if "Edg/" in u else "Firefox" if "Firefox" in u or "FxiOS" in u else "Chrome" if "Chrome" in u or "CriOS" in u
+          else "Safari" if "Safari" in u else "")
+    return dev + (" · " + br if br else "")
+
+
+def mask_ip(ip):
+    if ":" in ip:
+        return ":".join(ip.split(":")[:3]) + "::"
+    parts = ip.split(".")
+    return ".".join(parts[:3] + ["•"]) if len(parts) == 4 else ip
 
 
 def num(v, default=0):
@@ -79,7 +147,7 @@ def build(log):
         elif q["e"] == "ans":
             s["answers"].append({"ts": ts, "q": q.get("q", ""), "l": q.get("l", ""), "p": num(q.get("p")), "x": max(num(q.get("x")), 1)})
         elif q["e"] == "end":
-            s["ended"] = True; s["p"] = num(q.get("p")); s["x"] = num(q.get("x")); s["mode"] = q.get("mode", s["mode"])
+            s["ended"] = True; s["end_ts"] = ts; s["p"] = num(q.get("p")); s["x"] = num(q.get("x")); s["mode"] = q.get("mode", s["mode"])
     return sorted(sessions.values(), key=lambda s: s["start"]), tws
 
 
@@ -169,6 +237,23 @@ def public_data(sessions, tws):
             "questions": qlist}
 
 
+def logs_data(sessions, views, limit=300):
+    """Události pro stránku Logy: otevření stránek, spuštění a dokončení testů (IP s maskovanou poslední částí)."""
+    rows = []
+    for e in views:
+        path = urlsplit(e["u"]).path
+        rows.append({"ts": e["ts"], "e": "page", "path": path, "dev": device(e["ua"]), "ip": mask_ip(e["ip"])})
+    for s in sessions:
+        base = {"dev": device(s["ua"]), "ip": mask_ip(s["ip"]), "test": s["test"], "mode": s["mode"]}
+        rows.append(dict(base, ts=s["start"], e="start", n=s["n"], answered=len(s["answers"]), done=bool(s["ended"])))
+        if s["ended"]:
+            rows.append(dict(base, ts=s.get("end_ts", s["last"]), e="end", p=s["p"], x=s["x"]))
+    rows.sort(key=lambda r: -r["ts"])
+    for r in rows:
+        dt = local(r["ts"]); r["date"] = dt.strftime("%Y-%m-%d"); r["time"] = dt.strftime("%H:%M:%S"); del r["ts"]
+    return {"updated": datetime.now(TZ).strftime("%Y-%m-%d %H:%M"), "rows": rows[:limit], "total": len(rows)}
+
+
 def admin(sessions):
     print("%-17s %-16s %-26s %-5s %s" % ("začátek", "IP", "část", "body", "prohlížeč"))
     for s in sessions:
@@ -181,12 +266,17 @@ def admin(sessions):
 
 
 def main():
+    global HISTORY_FILE, LOGY_OUT, RESET_FILE
     ap = argparse.ArgumentParser()
     ap.add_argument("--log", default=DEFAULT_LOG)
     ap.add_argument("--out", default=DEFAULT_OUT)
     ap.add_argument("--admin", action="store_true")
+    ap.add_argument("--history", default=HISTORY_FILE, help=argparse.SUPPRESS)
+    ap.add_argument("--logy-out", default=LOGY_OUT, help=argparse.SUPPRESS)
+    ap.add_argument("--resets", default=RESET_FILE, help=argparse.SUPPRESS)
     ap.add_argument("--reset", metavar="TEST", help="vynuluje body jednoho testu (id nebo začátek id) nebo 'all'; historie pokusů zůstane")
     a = ap.parse_args()
+    HISTORY_FILE, LOGY_OUT, RESET_FILE = a.history, a.logy_out, a.resets
     sessions, tws = build(a.log)
     if a.reset:
         tests = per_test(sessions, tws)
@@ -212,6 +302,10 @@ def main():
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(public_data(sessions, tws), f, ensure_ascii=False, separators=(",", ":"))
     os.replace(tmp, a.out)
+    os.makedirs(os.path.dirname(os.path.abspath(LOGY_OUT)), exist_ok=True)
+    with open(LOGY_OUT + ".tmp", "w", encoding="utf-8") as f:
+        json.dump(logs_data(sessions, page_views(a.log)), f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(LOGY_OUT + ".tmp", LOGY_OUT)
     print("OK:", len(sessions), "pokusů ->", a.out)
 
 

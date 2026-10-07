@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Logy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800;900&family=Source+Serif+4:wght@400;600&display=swap">
+<style>
+:root{--bg:#eceff3;--surface:#fff;--ink:#151a22;--muted:#566070;--line:#cdd3dc;--grid:#e1e5ea;--accent:#c8322b;--pick:#e9edf8;--link:#2447a8;
+  --f-head:"Archivo","Helvetica Neue",Arial,sans-serif;--f-body:"Source Serif 4",Georgia,serif}
+@media (prefers-color-scheme:dark){:root{--bg:#12151b;--surface:#1b2029;--ink:#eceff4;--muted:#9aa4b2;--line:#303846;--grid:#272e3a;--accent:#ef5b52;--pick:#26304a;--link:#93abff;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:18px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:20px 56px}
+a{color:var(--link)}
+h1{margin:0 0 18px;padding-bottom:16px;border-bottom:6px solid var(--ink);font-family:var(--f-head);font-weight:900;text-transform:uppercase;line-height:.95;font-size:clamp(2.1rem,9.5vw,3.4rem)}
+h1 span{color:var(--accent)}
+h2{margin:30px 0 10px;font-family:var(--f-head);font-weight:800;font-size:1.05rem;text-transform:uppercase;letter-spacing:.04em}
+.back{font-family:var(--f-head);font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}
+.pts{background:var(--surface);border:2px solid var(--ink);padding:12px 14px;margin-top:16px;display:grid;gap:8px}
+.pts b{font-family:var(--f-head);font-weight:900;font-size:2rem;line-height:1.1}
+.pts .lab{font-family:var(--f-head);font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pts .tr{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.pts .tr i{display:block;height:100%;background:var(--accent);border-radius:5px}
+.pts .win{font-family:var(--f-head);font-weight:800;color:var(--accent)}
+.pl{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px}
+.pl li{display:grid;grid-template-columns:minmax(0,1fr) 90px auto;align-items:center;gap:10px;font-size:.95rem}
+.pl .tr{height:6px}
+.pl b{font-family:var(--f-head);font-size:.85rem;font-weight:800;white-space:nowrap}
+@media (max-width:420px){.pl li{grid-template-columns:1fr auto}.pl .tr{grid-column:1/-1;order:3}}
+.tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:16px}
+.tile{background:var(--surface);border:2px solid var(--ink);padding:10px 14px}
+.tile b{display:block;font-family:var(--f-head);font-weight:900;font-size:2rem;line-height:1.1}
+.tile small{color:var(--muted);font-size:.85rem}
+.card{background:var(--surface);border:2px solid var(--ink);padding:14px;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:30px 0 10px}
+.head h2{margin:0}
+.tog{background:none;border:0;padding:4px 0;cursor:pointer;color:var(--link);text-decoration:underline;font:inherit;font-size:.85rem}
+.note{color:var(--muted);font-size:.85rem;margin:8px 0 0}
+.chart{position:relative}
+.chart svg{display:block;width:100%;max-width:520px;margin:0 auto;height:auto;overflow:visible}
+.chart .gl{stroke:var(--grid);stroke-width:1}
+.chart text{fill:var(--muted);font-family:var(--f-head);font-size:14px}
+.chart .b{fill:var(--accent);pointer-events:none}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .hit:hover+.b,.chart .hit:focus+.b{opacity:.75}
+.chart .hit:focus{outline:none}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--f-head);font-size:.8rem;line-height:1.35;padding:6px 9px;border-radius:2px;white-space:nowrap;transform:translate(-50%,-100%);display:none;z-index:2}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-head);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td.n,th.n{text-align:right;white-space:nowrap}
+.tw{overflow-x:auto}
+.weak{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.weak li{display:grid;gap:4px}
+.weak .t{font-size:.95rem;line-height:1.3}
+.weak .r{display:flex;align-items:center;gap:10px;font-family:var(--f-head);font-size:.8rem;color:var(--muted)}
+.weak .tr{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.weak .tr i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.empty{padding:6px 0}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+html{scroll-padding-top:68px}
+.topnav{position:sticky;top:0;z-index:50;background:var(--ink);color:var(--bg);padding-top:env(safe-area-inset-top);box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.topnav .in{max-width:720px;margin:0 auto;padding-inline:16px;display:flex;align-items:stretch;gap:4px;font-family:var(--f-head);font-weight:800;font-size:.95rem;text-transform:uppercase;letter-spacing:.07em}
+.topnav a{color:var(--bg);text-decoration:none;padding:17px 14px 13px;border-bottom:4px solid transparent;opacity:.8}
+.topnav a:first-child{padding-left:0}
+.topnav a:hover{opacity:1;border-bottom-color:var(--muted)}
+.topnav a[aria-current="page"]{opacity:1;border-bottom-color:var(--accent)}
+.topnav .np{margin-left:auto;align-self:center;opacity:1;background:var(--accent);color:var(--bg);padding:6px 12px;border:0;border-radius:2px;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.9rem;letter-spacing:.04em}
+.topnav .np:hover{border:0;filter:brightness(1.08)}
+.topnav .np small{font-size:.7rem;margin-right:6px;opacity:.9}
+
+.flt{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.flt button{font:inherit;font-family:var(--f-head);font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;background:var(--surface);color:var(--ink);border:2px solid var(--ink);padding:6px 12px;cursor:pointer}
+.flt button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.lg td:first-child{white-space:nowrap}
+.k{display:inline-block;font-family:var(--f-head);font-weight:800;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;border:1.5px solid var(--ink);padding:1px 6px;margin-right:6px}
+.k.end{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.dim{color:var(--muted)}
+</style>
+</head>
+<body>
+<nav class="topnav" aria-label="Hlavní navigace"><div class="in"><a href="/">Testy</a><a href="/vysvedceni/">Vysvědčení</a></div></nav>
+<div class="wrap">
+  <h1>Lo<span>gy</span></h1>
+  <p class="note" style="margin:0 0 14px">Kdy se otevřely stránky a kdy se spouštěly a dokončovaly testy. U IP adres je poslední část skrytá.</p>
+  <div class="flt" role="group" aria-label="Filtr"><button type="button" data-f="all" aria-pressed="true">Vše</button><button type="button" data-f="page" aria-pressed="false">Stránky</button><button type="button" data-f="test" aria-pressed="false">Testy</button></div>
+  <div class="card"><div class="tw" id="out"><p class="dim" style="margin:0">Načítám…</p></div></div>
+  <p class="note" id="foot"></p>
+</div>
+<script>
+const MODES = {obr:"Poznávačka: díla s obrázkem", popis:"Poznávačka: díla podle popisu", dada:"Teorie: dada", dev:"Teorie: Devětsil", sur:"Teorie: surrealismus", pojmy:"Pojmy a přiřazování", cas:"Časová osa", all:"Celý test", redo:"Opakování chyb", again:"Znovu stejná část"};
+const MONTHS = ["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dayFull = d => { const [y, m, dd] = d.split("-").map(Number); return dd + ". " + MONTHS[m - 1]; };
+let DATA = null, NAMES = {}, HREFS = {}, FILTER = "all";
+
+Promise.all([
+  fetch("data.json?" + Date.now()).then(r => r.ok ? r.json() : Promise.reject()),
+  fetch("/tests.json?" + Date.now()).then(r => r.ok ? r.json() : []).catch(() => [])
+]).then(([d, tests]) => {
+  DATA = d;
+  tests.forEach(t => { NAMES[t.id] = t.name; HREFS[t.href] = t.name; });
+  render();
+}).catch(() => { document.getElementById("out").innerHTML = '<p class="dim" style="margin:0">Zatím tu nejsou žádné záznamy.</p>'; });
+
+document.querySelectorAll(".flt button").forEach(b => b.addEventListener("click", () => {
+  FILTER = b.dataset.f;
+  document.querySelectorAll(".flt button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  render();
+}));
+
+function pageName(p) { return p === "/" ? "Seznam testů" : p === "/vysvedceni/" ? "Vysvědčení" : p === "/logy/" ? "Logy" : (HREFS[p] || p); }
+function what(r) {
+  if (r.e === "page") return '<span class="k">Stránka</span>' + esc(pageName(r.path));
+  const name = NAMES[r.test] || r.test || "test";
+  if (r.e === "start") {
+    const mode = MODES[r.mode] || r.mode || "";
+    return '<span class="k">Start</span>' + esc(name) + (mode ? ' <span class="dim">· ' + esc(mode) + "</span>" : "") +
+      ' <span class="dim">· ' + r.answered + (r.n ? " / " + r.n : "") + " odpovědí" + (r.done ? "" : ", nedokončeno") + "</span>";
+  }
+  return '<span class="k end">Dokončeno</span>' + esc(name) + ' <span class="dim">· ' + r.p + " / " + r.x + " bodů" + (r.x ? " (" + Math.round(100 * r.p / r.x) + " %)" : "") + "</span>";
+}
+function render() {
+  const rows = DATA.rows.filter(r => FILTER === "all" || (FILTER === "page" ? r.e === "page" : r.e !== "page"));
+  document.getElementById("out").innerHTML = rows.length ?
+    '<table class="lg"><thead><tr><th>Kdy</th><th>Událost</th><th>Zařízení</th></tr></thead><tbody>' + rows.map(r =>
+      "<tr><td>" + dayFull(r.date) + " " + r.time.slice(0, 5) + "</td><td>" + what(r) + "</td><td>" + esc(r.dev) + '<br><span class="dim">' + esc(r.ip) + "</span></td></tr>").join("") + "</tbody></table>" :
+    '<p class="dim" style="margin:0">Žádné záznamy.</p>';
+  document.getElementById("foot").textContent = "Zobrazeno " + rows.length + " nejnovějších záznamů. Aktualizováno " + DATA.updated + ".";
+}
+</script>
+</body>
+</html>
