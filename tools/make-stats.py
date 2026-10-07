@@ -6,6 +6,7 @@ ani když se log smaže nebo otočí.
 Použití:
   python3 tools/make-stats.py                     # vygeneruje data.json (bez IP adres)
   python3 tools/make-stats.py --reset TEST|all    # vynuluje body testu po vyzvednutí odměny
+  python3 tools/make-stats.py --name A Meda       # pojmenuje zařízení A z Logů
   python3 tools/make-stats.py --admin             # vypíše přehled včetně IP a prohlížeče (jen pro Marka)
   python3 tools/make-stats.py --log CESTA --out CESTA
 """
@@ -25,6 +26,7 @@ DEFAULT_OUT = os.path.join(HERE, "..", "public", "vysvedceni", "data.json")
 TESTS_FILE = os.path.join(HERE, "..", "public", "tests.json")
 HISTORY_FILE = os.path.join(HERE, "history.jsonl")   # trvalá historie událostí z logu (jen na serveru)
 LOGY_OUT = os.path.join(HERE, "..", "public", "logy", "data.json")
+DEVICES_FILE = os.path.join(HERE, "devices.json")   # {"id zařízení": "jméno"} (volitelné, ručně přes --name)
 RESET_FILE = os.path.join(HERE, "resets.txt")   # řádky "epoch body", poslední = poslední reset
 GOAL = 100
 
@@ -108,7 +110,49 @@ def read_events(log):
 
 
 def page_views(log):
-    return [e for e in ingest(log) if page_path(urlsplit(e["u"]).path)]
+    """Otevření stránek: záznamy z device.js (mají ID zařízení, fungují i ze mezipaměti) a jako záloha
+    požadavky na samotnou stránku (zahodí se, pokud k nim existuje záznam z device.js)."""
+    events = ingest(log)
+    beacons, gets = [], []
+    for e in events:
+        u = urlsplit(e["u"])
+        if u.path == "/ping.gif":
+            q = {k: v[0] for k, v in parse_qs(u.query).items()}
+            if q.get("e") == "view" and page_path(q.get("p", "")):
+                beacons.append({"ts": e["ts"], "ip": e["ip"], "ua": e["ua"], "path": q["p"], "did": q.get("d", "")})
+        elif page_path(u.path):
+            gets.append({"ts": e["ts"], "ip": e["ip"], "ua": e["ua"], "path": u.path, "did": ""})
+    out = list(beacons)
+    for g in gets:
+        if not any(b["ip"] == g["ip"] and b["path"] == g["path"] and abs(b["ts"] - g["ts"]) <= 15 for b in beacons):
+            out.append(g)
+    return out
+
+
+def device_labels(sessions, views):
+    """Štítky zařízení podle pořadí prvního výskytu (A, B, ...), případně jméno z devices.json."""
+    first = {}
+    for e in views:
+        if e["did"]:
+            first[e["did"]] = min(first.get(e["did"], e["ts"]), e["ts"])
+    for s in sessions:
+        if s.get("did"):
+            first[s["did"]] = min(first.get(s["did"], s["start"]), s["start"])
+    try:
+        names = json.load(open(DEVICES_FILE, encoding="utf-8"))
+    except (OSError, ValueError):
+        names = {}
+    labels = {}
+    for n, did in enumerate(sorted(first, key=lambda d: first[d])):
+        letter = ""
+        k = n
+        while True:
+            letter = chr(65 + k % 26) + letter
+            k = k // 26 - 1
+            if k < 0:
+                break
+        labels[did] = (names.get(did) or "Zařízení " + letter, letter)
+    return labels
 
 
 def device(ua):
@@ -140,8 +184,10 @@ def build(log):
     tws = {}
     for ts, q, ip, ua in sorted(read_events(log), key=lambda x: x[0]):
         s = sessions.setdefault(q["s"], {"id": q["s"], "test": q.get("t", ""), "start": ts, "mode": "", "n": 0,
-                                         "ended": False, "p": 0, "x": 0, "answers": [], "ip": ip, "ua": ua, "last": ts})
+                                         "ended": False, "p": 0, "x": 0, "answers": [], "ip": ip, "ua": ua, "last": ts, "did": q.get("d", "")})
         s["last"] = ts
+        if q.get("d") and not s.get("did"):
+            s["did"] = q["d"]
         if q["e"] == "start":
             s["start"] = ts; s["mode"] = q.get("mode", ""); s["n"] = num(q.get("n")); tws[s["test"]] = num(q.get("tw")) or tws.get(s["test"], 0)
         elif q["e"] == "ans":
@@ -239,26 +285,43 @@ def public_data(sessions, tws):
 
 def logs_data(sessions, views, limit=300):
     """Události pro stránku Logy: otevření stránek, spuštění a dokončení testů (IP s maskovanou poslední částí)."""
+    labels = device_labels(sessions, views)
     rows = []
     for e in views:
-        path = urlsplit(e["u"]).path
-        rows.append({"ts": e["ts"], "e": "page", "path": path, "dev": device(e["ua"]), "ip": mask_ip(e["ip"])})
+        rows.append({"ts": e["ts"], "e": "page", "path": e["path"], "dev": device(e["ua"]), "ip": mask_ip(e["ip"]),
+                     "who": labels.get(e["did"], ("", ""))[0]})
     for s in sessions:
-        base = {"dev": device(s["ua"]), "ip": mask_ip(s["ip"]), "test": s["test"], "mode": s["mode"]}
+        base = {"dev": device(s["ua"]), "ip": mask_ip(s["ip"]), "test": s["test"], "mode": s["mode"],
+                "who": labels.get(s.get("did", ""), ("", ""))[0]}
         rows.append(dict(base, ts=s["start"], e="start", n=s["n"], answered=len(s["answers"]), done=bool(s["ended"])))
         if s["ended"]:
             rows.append(dict(base, ts=s.get("end_ts", s["last"]), e="end", p=s["p"], x=s["x"]))
     rows.sort(key=lambda r: -r["ts"])
     for r in rows:
         dt = local(r["ts"]); r["date"] = dt.strftime("%Y-%m-%d"); r["time"] = dt.strftime("%H:%M:%S"); del r["ts"]
-    return {"updated": datetime.now(TZ).strftime("%Y-%m-%d %H:%M"), "rows": rows[:limit], "total": len(rows)}
+    return {"updated": datetime.now(TZ).strftime("%Y-%m-%d %H:%M"), "devices": len(labels), "rows": rows[:limit], "total": len(rows)}
 
 
-def admin(sessions):
-    print("%-17s %-16s %-26s %-5s %s" % ("začátek", "IP", "část", "body", "prohlížeč"))
+def name_device(sessions, views, key, name):
+    labels = device_labels(sessions, views)
+    match = [d for d, (lab, letter) in labels.items() if key in (d, letter, lab)]
+    if len(match) != 1:
+        sys.exit("Zařízení '%s' nenalezeno. Dostupná: %s" % (key, ", ".join("%s (%s)" % (l[1], d) for d, l in labels.items()) or "žádná"))
+    try:
+        names = json.load(open(DEVICES_FILE, encoding="utf-8"))
+    except (OSError, ValueError):
+        names = {}
+    names[match[0]] = name
+    json.dump(names, open(DEVICES_FILE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print("Zařízení %s se teď jmenuje: %s" % (match[0], name))
+
+
+def admin(sessions, labels=None):
+    labels = labels or {}
+    print("%-17s %-16s %-14s %-12s %-9s %s" % ("začátek", "IP", "zařízení", "část", "body", "prohlížeč"))
     for s in sessions:
         pts = "%d/%d" % (s["p"], s["x"]) if s["ended"] else "%d odp." % len(s["answers"])
-        print("%-17s %-16s %-26s %-9s %s" % (local(s["start"]).strftime("%Y-%m-%d %H:%M"), s["ip"], s["mode"], pts, s["ua"][:70]))
+        print("%-17s %-16s %-14s %-12s %-9s %s" % (local(s["start"]).strftime("%Y-%m-%d %H:%M"), s["ip"], labels.get(s.get("did", ""), ("-", ""))[0][:14], s["mode"], pts, s["ua"][:50]))
     ips = defaultdict(int)
     for s in sessions:
         ips[s["ip"]] += 1
@@ -266,19 +329,23 @@ def admin(sessions):
 
 
 def main():
-    global HISTORY_FILE, LOGY_OUT, RESET_FILE
+    global HISTORY_FILE, LOGY_OUT, RESET_FILE, DEVICES_FILE
     ap = argparse.ArgumentParser()
     ap.add_argument("--log", default=DEFAULT_LOG)
     ap.add_argument("--out", default=DEFAULT_OUT)
     ap.add_argument("--admin", action="store_true")
+    ap.add_argument("--name", nargs=2, metavar=("ZAŘÍZENÍ", "JMÉNO"), help="pojmenuje zařízení (písmeno z Logů, např. A, nebo jeho ID)")
+    ap.add_argument("--devices", default=DEVICES_FILE, help=argparse.SUPPRESS)
     ap.add_argument("--history", default=HISTORY_FILE, help=argparse.SUPPRESS)
     ap.add_argument("--logy-out", default=LOGY_OUT, help=argparse.SUPPRESS)
     ap.add_argument("--resets", default=RESET_FILE, help=argparse.SUPPRESS)
     ap.add_argument("--reset", metavar="TEST", help="vynuluje body jednoho testu (id nebo začátek id) nebo 'all'; historie pokusů zůstane")
     a = ap.parse_args()
-    HISTORY_FILE, LOGY_OUT, RESET_FILE = a.history, a.logy_out, a.resets
+    HISTORY_FILE, LOGY_OUT, RESET_FILE, DEVICES_FILE = a.history, a.logy_out, a.resets, a.devices
     sessions, tws = build(a.log)
-    if a.reset:
+    if a.name:
+        name_device(sessions, page_views(a.log), a.name[0], a.name[1])
+    elif a.reset:
         tests = per_test(sessions, tws)
         ids = [t["id"] for t in tests]
         if a.reset == "all":
@@ -296,7 +363,7 @@ def main():
         for t in per_test(sessions, tws):
             print("%s: %d / %d (vyzvednutých odměn: %d)" % (t["id"], t["points"], GOAL, t["rewards"]))
         print()
-        admin(sessions); return
+        admin(sessions, device_labels(sessions, page_views(a.log))); return
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     tmp = a.out + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:

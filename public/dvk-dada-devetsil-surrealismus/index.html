@@ -141,6 +141,7 @@ html{scroll-padding-top:68px}
   <main id="app"></main>
 </div>
 
+<script src="/device.js"></script>
 <script>
 /* ============ DATA ============ */
 const S = {
@@ -464,7 +465,7 @@ const TEST_ID = "dvk-dada-devetsil-surrealismus";
 let sid = "", currentMode = "";
 function ping(p) {
   try {
-    const qs = new URLSearchParams(Object.assign({t: TEST_ID, s: sid}, p));
+    const qs = new URLSearchParams(Object.assign({t: TEST_ID, s: sid, d: window.DID || ""}, p));
     qs.set("r", Date.now().toString(36));
     new Image().src = "/ping.gif?" + qs.toString();
   } catch (e) { /* bez ukládání test funguje dál */ }

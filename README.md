@@ -36,3 +36,9 @@ Seznam testů pro body: `public/tests.json` (id, název, odkaz). Nový test = no
 Stránka `public/logy/` (odkaz v zápatí Vysvědčení) ukazuje otevření stránek a spuštění/dokončení testů s časem, zařízením a IP adresou s maskovanou poslední částí.
 Při každém spuštění `tools/make-stats.py` se nové události z logu Caddy připíšou do `tools/history.jsonl` (jen na serveru, v `.gitignore`), takže se historie neztratí, ani když se log smaže nebo otočí.
 Neodstraňuj `tools/history.jsonl`. Log už mazat není potřeba.
+
+### Zařízení
+
+`public/device.js` (načítá ho každá stránka) uloží do prohlížeče náhodné ID a při každém otevření stránky ho pošle do logu (i když se stránka vzala z mezipaměti). Pokusy v testu ho posílají také.
+V Logách se zařízení jmenují „Zařízení A, B, …“ podle pořadí prvního výskytu. Pojmenování na serveru: `python3 tools/make-stats.py --name A "Meda iPhone"` (uloží se do `tools/devices.json`, není v gitu).
+ID je jen náhodný řetězec v daném prohlížeči. Po vymazání dat stránek nebo v anonymním režimu vznikne nové zařízení.

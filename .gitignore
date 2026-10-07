@@ -4,3 +4,4 @@ tools/resets.txt
 tools/history.jsonl
 public/logy/data.json
 public/logy/data.json.tmp
+tools/devices.json

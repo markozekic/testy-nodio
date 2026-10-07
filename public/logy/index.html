@@ -91,6 +91,7 @@ html{scroll-padding-top:68px}
   <div class="card"><div class="tw" id="out"><p class="dim" style="margin:0">Načítám…</p></div></div>
   <p class="note" id="foot"></p>
 </div>
+<script src="/device.js"></script>
 <script>
 const MODES = {obr:"Poznávačka: díla s obrázkem", popis:"Poznávačka: díla podle popisu", dada:"Teorie: dada", dev:"Teorie: Devětsil", sur:"Teorie: surrealismus", pojmy:"Pojmy a přiřazování", cas:"Časová osa", all:"Celý test", redo:"Opakování chyb", again:"Znovu stejná část"};
 const MONTHS = ["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
@@ -128,9 +129,9 @@ function render() {
   const rows = DATA.rows.filter(r => FILTER === "all" || (FILTER === "page" ? r.e === "page" : r.e !== "page"));
   document.getElementById("out").innerHTML = rows.length ?
     '<table class="lg"><thead><tr><th>Kdy</th><th>Událost</th><th>Zařízení</th></tr></thead><tbody>' + rows.map(r =>
-      "<tr><td>" + dayFull(r.date) + " " + r.time.slice(0, 5) + "</td><td>" + what(r) + "</td><td>" + esc(r.dev) + '<br><span class="dim">' + esc(r.ip) + "</span></td></tr>").join("") + "</tbody></table>" :
+      "<tr><td>" + dayFull(r.date) + " " + r.time.slice(0, 5) + "</td><td>" + what(r) + "</td><td>" + (r.who ? "<b>" + esc(r.who) + "</b><br>" : "") + '<span class="dim">' + esc(r.dev) + "<br>" + esc(r.ip) + "</span></td></tr>").join("") + "</tbody></table>" :
     '<p class="dim" style="margin:0">Žádné záznamy.</p>';
-  document.getElementById("foot").textContent = "Zobrazeno " + rows.length + " nejnovějších záznamů. Aktualizováno " + DATA.updated + ".";
+  document.getElementById("foot").textContent = "Zobrazeno " + rows.length + " nejnovějších záznamů. Různých zařízení: " + (DATA.devices || 0) + ". Aktualizováno " + DATA.updated + ".";
 }
 </script>
 </body>
