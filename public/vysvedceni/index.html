@@ -80,6 +80,7 @@ html{scroll-padding-top:68px}
 <div class="wrap">
   <h1>Vysvě<span>dčení</span></h1>
   <div id="app"><p class="empty">Načítám…</p></div>
+  <footer class="foot"><a href="/logy/">Logy</a></footer>
 </div>
 <script>
 const MODES = {obr:"Poznávačka: díla s obrázkem", popis:"Poznávačka: díla podle popisu", dada:"Teorie: dada", dev:"Teorie: Devětsil", sur:"Teorie: surrealismus", pojmy:"Pojmy a přiřazování", cas:"Časová osa", all:"Celý test", redo:"Opakování chyb", again:"Znovu stejná část"};
@@ -129,8 +130,7 @@ function render(d) {
   }
 
   h += '<h2>Všechny pokusy</h2><div class="card"><div class="tw">' + table(S) + '</div></div>' +
-    '<p class="note">Aktualizováno ' + esc(d.updated || "") + ". Údaje se obnovují zhruba každou minutu.</p>" +
-    '<footer class="foot"><a href="/logy/">Logy</a></footer>';
+    '<p class="note">Aktualizováno ' + esc(d.updated || "") + ". Údaje se obnovují zhruba každou minutu.</p>";
   $.innerHTML = h;
   if (chrono.length) { drawChart(chrono); document.getElementById("tog").addEventListener("click", e => {
     const t = document.getElementById("tbl"), c = document.getElementById("chart");
